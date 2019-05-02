@@ -82,16 +82,12 @@ fprintf(FG, 'OUTP2 ON');
 DurBit = 10; % ms, bit duration approx 2 ms longer
 DurBuf = 1; % ms, square wave buffer duration, should be unnecessary
 
-
-
-
-
 %3 Any one-time/last-minute initializing.
 fprintf(FG, ['FREQ ' num2str(Parameters(1,1)*1000)]); % Transducer Frequency (kHz)
 fprintf(FG,'AM:STAT 1');
 fprintf(FG,'AM:SOUR CH2');
 % Give Ch1 long enough (at least 1.7 sec) to finish warming up.
-pause(1.25); % Don't need this much time, maybe?
+pause(1.25); % This value is arbitrary, but should be sufficiently high
 
 
 %% --------------   Real code: Loop through indices/trials   --------------
@@ -105,24 +101,28 @@ for trial = 1:NumberOfTrials
     fprintf(FG, 'OUTP2 ON');
     pause(1); % Pause to separate trials, let OUTP2 recover
     
+    inter_trial = inter_trial - 1;
     
     fprintf(FG, 'SOUR2:BURS:STAT 0'); % First buffer
     pause(DurBuf/1000);
+    inter_trial = inter_trial - DurBuf/1000;
     
     for param = 1:NumberOfParameters % Outputs each parameter sequentially
-        for bit = 1:16 % Starts from Most Significant Bit
+        for bit = 1:bytesize % Starts from Most Significant Bit
             if DataVector(bit,TrialIndices(trial),param) % Outputs bits of trial to be run
                 % MAKE SURE ABOVE IS REFERENCING CORRECTLY
                 fprintf(FG, 'SOUR2:FUNC DC');
-                pause(DurBit/1000);
+                pause(DurBit/1000); inter_trial = inter_trial - DurBit/1000;
                 fprintf(FG, 'SOUR2:FUNC SQU');
             else
                 fprintf(FG, 'SOUR2:BURS:STAT 1');
-                pause(DurBit/1000);
+                pause(DurBit/1000); inter_trial = inter_trial - DurBit/1000;
                 fprintf(FG, 'SOUR2:BURS:STAT 0');
             end
         end
         pause(DurBuf/1000); % Ch2 offset is now set to zero for trial phase
+        inter_trial = inter_trial - DurBuf/1000;
+    
     end
     
     %% ----------------------------   Trial Phase   ---------------------------
@@ -150,12 +150,13 @@ for trial = 1:NumberOfTrials
     fprintf(FG, 'OUTP1 ON ');
     fprintf(FG, 'OUTP2 ON ');
     pause(1); % Do we need a pause for these to boot up?
+    inter_trial = inter_trial - 1;
     fprintf(FG, '*TRG'); % Starts Ch2 and Ch1 at same time
     pause(Parameters(TrialIndices(trial),5)/1000); % Trial duration (ms)
     fprintf(FG, 'OUTP1 OFF');
     fprintf(FG, 'OUTP2 OFF');
-    
-    pause(inter_trial/1000-Parameters(TrialIndices(trial),5)/1000-3); % inter-trial pause
+    inter_trial = inter_trial - Parameters(TrialIndices(trial),5)/1000;
+    pause(inter_trial); % inter-trial pause
 end
 
 %% ------------------------   A support function   ------------------------
