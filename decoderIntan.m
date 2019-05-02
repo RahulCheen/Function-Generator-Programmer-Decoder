@@ -17,7 +17,7 @@
 %       carrierFreq: decoded carrier frequency for the trial [kHz]
 %         amplitude: decoded amplitude for the trial (input to fxn generator) [mV]
 %         dutyCycle: decoded duty cycle for the trial [%]
-%               PRF: decoded modulating frequency for the trial [Hz]
+%           modFreq: decoded modulating frequency for the trial [Hz]
 %     pulseDuration: decoded pulse duration for the trial [ms]
 %
 % Errors should not cause the code to quit, but should instead place an empty array in the location
@@ -27,15 +27,18 @@ clear;
 addpath(cd);
 addpath(pwd);
 
-[file1,path1] = uigetfile('*.mat','Select Digital Data','MultiSelect','off');
+[file1,path1] = uigetfile('*.rhs','Select Raw Data','MultiSelect','off');
 
 
 c = strsplit(file1,'.');
 timestamp = c{1};
 
-fname = [path1,file1];
+fname = [path1,file1(1:end-3),'mat'];
 cd(path1);
-load(fname,'*dig*','*adc*','ana*','freq*','v*'); % load in all variables with these
+try load(fname,'*dig*','*adc*','ana*','freq*','v*'); % load in all variables with these
+catch
+    error('Must run conversion scripts: convert_rhs.m or convert_dat.m');
+end
 try d1(1,:) = board_dig_in_data(1,:);
     a1(1,:) = board_adc_data(1,:);
 catch
@@ -63,10 +66,10 @@ ii=new_ii;
 % initialize export structure
 ExtractedData = struct(...
     'bitData',          struct(...
-                                'bitMean',  [],...
-                                'bitValue', [],...
-                                'bitStart', [],...
-                                'bitEnd',   [],...
+                                'bitMean',      [],...
+                                'bitValue',     [],...
+                                'bitStart',     [],...
+                                'bitEnd',       [],...
                                 'bitEnvelope',  []...
                                 ),...
     'trialEnvelope',    [],...
@@ -78,7 +81,7 @@ ExtractedData = struct(...
     'carrierFreq',      [],...
     'amplitude',        [],...
     'dutyCycle',        [],...
-    'PRF',              [],...
+    'modFreq',          [],...
     'pulseDuration',   	[]...
     );
 iBit = 0; iTrial = 1;
@@ -107,7 +110,8 @@ while ii<length(d1) % loop through digitalData
             
         case 0 % treat data as a trial
             
-            trialstream = d1(endBuzz(1)+1000:startBuzz(2)-1000); % trial stream, remove 100 points from either end
+            trial_remove = 100;
+            trialstream = d1(endBuzz(1)+trial_remove:startBuzz(2)-trial_remove); % trial stream, remove 100 points from either end
             
             
             stimStart   = find(trialstream,1,'first') - 1;
@@ -119,20 +123,20 @@ while ii<length(d1) % loop through digitalData
                 ExtractedData(iTrial).carrierFreq       = trial_parameters(1);
                 ExtractedData(iTrial).amplitude         = trial_parameters(2);
                 ExtractedData(iTrial).dutyCycle         = trial_parameters(3);
-                ExtractedData(iTrial).PRF               = trial_parameters(4);
+                ExtractedData(iTrial).modFreq           = trial_parameters(4);
                 ExtractedData(iTrial).pulseDuration     = trial_parameters(5);
                 
             catch % unable to extract parameters, set to empty, find corresponding trial in ParameterOrder.mat
                 ExtractedData(iTrial).carrierFreq       = [];
                 ExtractedData(iTrial).amplitude         = [];
                 ExtractedData(iTrial).dutyCycle         = [];
-                ExtractedData(iTrial).PRF               = [];
+                ExtractedData(iTrial).modFreq           = [];
                 ExtractedData(iTrial).pulseDuration     = [];
             
             end
             
-            ExtractedData(iTrial).trialPhaseStart   = endBuzz  (1)+1000;  % start of trial phase
-            ExtractedData(iTrial).trialPhaseEnd     = startBuzz(2)-1000;  % end of trial phase
+            ExtractedData(iTrial).trialPhaseStart   = endBuzz  (1)+trial_remove;  % start of trial phase
+            ExtractedData(iTrial).trialPhaseEnd     = startBuzz(2)-trial_remove;  % end of trial phase
             ExtractedData(iTrial).trialEnvelope     = trialstream;   % entire trial phase
             try ExtractedData(iTrial).stimStart         = stimStart + startBuzz(2); % start of stimulation
                 ExtractedData(iTrial).stimEnd           = stimEnd   + startBuzz(2); % end of stimulation
@@ -157,6 +161,15 @@ end
 % save to file, in same folder as data
 save(['ExtractedData_',timestamp],'ExtractedData','d1','a1','fname');
 
+ParameterOrderDecoded = [...
+    [ExtractedData(:).carrierFreq]',...
+    [ExtractedData(:).amplitude]',...
+    [ExtractedData(:).dutyCycle]',...
+    [ExtractedData(:).modFreq]',...
+    [ExtractedData(:).pulseDuration]'];
+
+disp(['       Number of Trials: ',num2str(length(ParameterOrderDecoded))]);
+disp(['Number of Unique Trials: ',num2str(length(unique(ParameterOrderDecoded,'rows')))]);
 
 function [buzzStart,buzzEnd,new_ii] = findBuzz(d1,startindex)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~ FindBuzz ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
