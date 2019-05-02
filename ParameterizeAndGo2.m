@@ -19,6 +19,8 @@ PulseDurations  = [50   200     1000        ];  % pulse durations               
 trial_order     = 'random'; % = 'in order';
 FG_serialNumber = 'MY52600694';% serial number of old = MY52600670, new = MY52600694
 
+DataDir = 'C:/Data/';
+SaveFolderName  = 'Parameter Orders';
 %% -------------------------   Initializations   -------------------------
 Parameters           = allcomb(TF,Amplitudes,DutyCycles,PRFs,PulseDurations);
 [Parameters,NCycles] = RemoveParameterErrors(Parameters);
@@ -48,7 +50,8 @@ end
 
 % SAVE TO FILE, WITH TIME STAMP
 timestamp = clockformat(clock); % get current time, format for output data
-save(['ParameterOrder_',timestamp],'Parameters','DataVector','NumberOfTrials','TrialIndices');
+mkdir([DataDir,SaveFolderName]);
+save([DataDir,SaveFolderName,'/','ParameterOrder_',timestamp],'Parameters','DataVector','NumberOfTrials','TrialIndices');
 
 disp('Parameters (in randomized order):');
 disp(Parameters(TrialIndices,:));
