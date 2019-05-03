@@ -141,7 +141,7 @@ for trial = 1:NumberOfTrials
         fprintf(FG, 'SOUR2:FUNC PULS');
         
     else % Make a square wave envelope of appropriate parameters (Switch to pulse based?)
-        fprintf(FG, ['SOUR2:FREQ '          num2str(Parameters(TrialIndices(trial),4))]); % Modulating Frequency (Hz), (creates 5 ms 1s)
+        fprintf(FG, ['SOUR2:FREQ '          num2str(Parameters(TrialIndices(trial),4))]); % Modulating Frequency (Hz)
         fprintf(FG, ['SOUR2:FUNC:SQU:DCYC ' num2str(Parameters(TrialIndices(trial),3))]); % Duty Cycle (%)
         NCycles = floor(Parameters(TrialIndices(trial),4)*Parameters(TrialIndices(trial),5)/1000);
         fprintf(FG, ['SOUR2:BURSt:NCYC '    num2str(NCycles)]); % Number of cycles, (creates 5 ms 1s)

@@ -40,10 +40,8 @@ catch
     error('Must run conversion scripts: convert_rhs.m or convert_dat.m');
 end
 try d1(1,:) = board_dig_in_data(1,:);
-    a1(1,:) = board_adc_data(1,:);
 catch
     try d1(1,:) = digital(1,:);
-        a1(1,:) = analog(1,:);
     catch
         try d1(1,:) = v';
         catch
