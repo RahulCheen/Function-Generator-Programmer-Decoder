@@ -22,8 +22,9 @@ FG_serialNumber = 'MY52600694';% serial number of fxn generator (old = MY5260067
 DataDir         = 'C:/Data/';           % data directory
 SaveFolderName  = 'Parameter Orders';   % folder subdirectory
 %% -------------------------   Initializations   -------------------------
-Parameters           = allcomb(TF,Amplitudes,DutyCycles,PRFs,PulseDurations);
-[Parameters,NCycles] = RemoveParameterErrors(Parameters);
+Parameters           = allcomb(TF,Amplitudes,DutyCycles,PRFs,PulseDurations); % all possible trial combinations
+[Parameters,NCycles] = RemoveParameterErrors(Parameters); % remove bad parameter combinations
+bytesize = max([nextpow2(max(max(Parameters))),bytesize]); % take maximum of needed bytesize and user-input bytesize
 
 NumberOfTrials      = size(Parameters,1);
 NumberOfParameters  = size(Parameters,2);
@@ -49,7 +50,8 @@ for iTrial = 1:NumberOfTrials
 end
 
 % SAVE TO FILE, WITH TIME STAMP
-timestamp = clockformat(clock); % get current time, format for output data
+%timestamp = clockformat(clock); % get current time, format for output data
+timestamp = rhs_tag(directory1);
 mkdir([DataDir,SaveFolderName]);
 save([DataDir,SaveFolderName,'/','ParameterOrder_',timestamp],'Parameters','DataVector','NumberOfTrials','TrialIndices');
 
@@ -181,4 +183,12 @@ outputstring = [...
     cbetween{5},num2str(c(5)),      ...   	% minute
     cbetween{6},num2str(round(c(6)))];      % second
 format short
+end
+
+function outputstring = rhs_tag(directory1)
+c = dir(directory1);
+[~,ii] = sort([c(:).datenum],'descend');
+c = c(ii);
+outputstring = c(1).name(1:end-4);
+
 end

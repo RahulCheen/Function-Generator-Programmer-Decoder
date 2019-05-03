@@ -17,9 +17,10 @@ catch
     error('Cannot find ExtractedData file.  Make sure to run decoderIntan first on the raw data file.');
 end
 
+decodedFileName = ['ExtractedData_',file1(1:end-4)];
 c = dir; a = [c(:).isdir]; c = c(~a); % get all filenames in the directory
 for ii=1:length(c)
-    if strcmp(c(ii).name(1:14),'ParameterOrder') % if a file begins with 'ParameterOrder'
+    if strcmp(c(ii).name(17:end),file1(17:end)) && strcmp(c(ii).name(1:14),'ParameterOrder')
         parameterOrderName = c(ii).name;
     end
 end

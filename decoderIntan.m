@@ -1,3 +1,4 @@
+function decoderIntan(nParams)
 % DECODERINTAN reads digital data from the function generator (via Intan), and separates out binary
 % parameter information and stimulation envelopes.  Output is a file called 'ExtractedData.mat' that
 % contains a structure called ExtractedData, which contains information for each trial found in the
@@ -22,20 +23,21 @@
 %
 % Errors should not cause the code to quit, but should instead place an empty array in the location
 % of the error.
-clear;
+if ~exist('nParams','var')
+    nParams = 5;
+end
 
 addpath(cd);
 addpath(pwd);
 
 [file1,path1] = uigetfile('*.rhs','Select Raw Data','MultiSelect','off');
 
-
 c = strsplit(file1,'.');
 timestamp = c{1};
 
-fname = [path1,file1(1:end-3),'mat'];
+fileName = [path1,file1(1:end-3),'mat'];
 cd(path1);
-try load(fname,'*dig*','*adc*','ana*','freq*','v*'); % load in all variables with these
+try load(fileName,'*dig*','*adc*','ana*','freq*','v*'); % load in all variables with these
 catch
     error('Must run conversion scripts: convert_rhs.m or convert_dat.m');
 end
@@ -117,7 +119,7 @@ while ii<length(d1) % loop through digitalData
             
             % get parameter information from the bit data for each trial
             try trialByte        = [ExtractedData(iTrial).bitData(:).bitValue]; % try to get the information
-                trial_parameters = debinarize(trialByte);
+                trial_parameters = debinarize(trialByte,nParams);
                 ExtractedData(iTrial).carrierFreq       = trial_parameters(1);
                 ExtractedData(iTrial).amplitude         = trial_parameters(2);
                 ExtractedData(iTrial).dutyCycle         = trial_parameters(3);
@@ -157,7 +159,7 @@ while ii<length(d1) % loop through digitalData
 end
 
 % save to file, in same folder as data
-save(['ExtractedData_',timestamp],'ExtractedData','d1','a1','fname');
+save(['ExtractedData_',timestamp],'ExtractedData','d1','fileName');
 
 ParameterOrderDecoded = [...
     [ExtractedData(:).carrierFreq]',...
@@ -169,8 +171,11 @@ ParameterOrderDecoded = [...
 disp(['       Number of Trials: ',num2str(length(ParameterOrderDecoded))]);
 disp(['Number of Unique Trials: ',num2str(length(unique(ParameterOrderDecoded,'rows')))]);
 
-function [buzzStart,buzzEnd,new_ii] = findBuzz(d1,startindex)
+assignin('base','ExtractedData',eval('ExtractedData'));
+end
+
 % ~~~~~~~~~~~~~~~~~~~~~~~~~ FindBuzz ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function [buzzStart,buzzEnd,new_ii] = findBuzz(d1,startindex)
 % FINDBUZZ finds the next buzz in the digital channel.  Inputs are the full digital channel data, and the
 % starting index to find the next buzz.  Outputs are the start of the buzz, the end of the buzz, and the
 % new starting index for the next iteration.  If the loop goes to the end of the digital channel without
@@ -230,13 +235,12 @@ end
 
 
 % ~~~~~~~~~~~~~~~~~~~~~~~ debinarize ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-function ParaOut = debinarize(dataBlock)
+function ParaOut = debinarize(dataBlock,nParams)
 % DEBINARIZE converts from binary to base-10.  Requires a 2^n byte size (8, 16, 32, etc).
 
-[numberOfTrials,M] = size(dataBlock); % get size of dataBlock
-a = factor(M);              % factors of M
-bytesize = prod(a(a==2));   % byte-size is the product of all of the factors of 2
-nParams = a(a~=2);          % number of parameters is the only factor left over
+[numberOfTrials,N] = size(dataBlock); % get size of dataBlock
+
+bytesize = floor(N/nParams);   % byte-size the divisor of number of columns and number of params
 
 ParaOut = zeros(numberOfTrials,nParams); % initialize
 for i = 1:numberOfTrials % Trial
