@@ -6,21 +6,21 @@ clearvars -except FG;
 
 %% ---------------   VARIABLES YOU ARE RESPONSIBLE TO SET   ---------------
 
-inter_trial     = 5000;     % intertrial duration for 1000 ms between trials (actual is slightly shorter)
+inter_trial     = 5000;     % time between stimulations [ms]
 bytesize        = 16;       % number of bits to write for each parameter(keep at 16 for parameter values of <= 1000)
 
 % Import a parameter set list, OR populate a parameter set list
-TF              = [12                       ];  % TRANSDUCER FREQUENCY          [kHz]
-Amplitudes      = [25   100     400         ];  % voltages [mV] to achieve 0.1, 2, and 40 W/cm^2
-DutyCycles      = [5    50      100         ];	% duty cycles                   [%]
-PRFs            = [0    10      100     1000];	% pulse repetition frequencies  [Hz]
-PulseDurations  = [50   200     1000        ];  % pulse durations               [ms]
+TF              = [5                        ];  % TRANSDUCER FREQUENCY (must be a single value) [kHz]
+Amplitudes      = [25   100     400         ];  % voltages to achieve 0.1, 2, and 40 W/cm^2     [mV]
+DutyCycles      = [5    50      100         ];	% duty cycles                                   [%]
+PRFs            = [0    10      100     1000];	% pulse repetition frequencies                  [Hz]
+PulseDurations  = [50   200     1000        ];  % pulse durations                               [ms]
 
 trial_order     = 'random'; % = 'in order';
-FG_serialNumber = 'MY52600694';% serial number of old = MY52600670, new = MY52600694
+FG_serialNumber = 'MY52600694';% serial number of fxn generator (old = MY52600670, new = MY52600694)
 
-DataDir = 'C:/Data/';
-SaveFolderName  = 'Parameter Orders';
+DataDir         = 'C:/Data/';           % data directory
+SaveFolderName  = 'Parameter Orders';   % folder subdirectory
 %% -------------------------   Initializations   -------------------------
 Parameters           = allcomb(TF,Amplitudes,DutyCycles,PRFs,PulseDurations);
 [Parameters,NCycles] = RemoveParameterErrors(Parameters);
@@ -87,25 +87,23 @@ fprintf(FG, ['FREQ ' num2str(Parameters(1,1)*1000)]); % Transducer Frequency (kH
 fprintf(FG,'AM:STAT 1');
 fprintf(FG,'AM:SOUR CH2');
 % Give Ch1 long enough (at least 1.7 sec) to finish warming up.
-pause(1.25); % This value is arbitrary, but should be sufficiently high
+pause(2); % This value is arbitrary, but should be sufficiently high
 
 
 %% --------------   Real code: Loop through indices/trials   --------------
 for trial = 1:NumberOfTrials
-    
     %% ----------------------------   Data Phase   ----------------------------
     % Ch1 silenced, Ch2 to data mode, first buffer
+    tic;
     fprintf(FG, 'SOUR2:FUNC SQU'); % Change back to square wave if changed
     fprintf(FG, 'SOUR2:FUNC:SQU:DCYC 50');
-    fprintf(FG, 'SOUR2:FREQ 7000'); % Creates 5 ms of 1s
+    fprintf(FG, 'SOUR2:FREQ 7000'); % Creates 5 ms of 1s @ 7kHz
     fprintf(FG, 'OUTP2 ON');
-    pause(1); % Pause to separate trials, let OUTP2 recover
+    pause(0.5); % Pause to separate trials, let OUTP2 recover
     
-    inter_trial = inter_trial - 1;
     
     fprintf(FG, 'SOUR2:BURS:STAT 0'); % First buffer
     pause(DurBuf/1000);
-    inter_trial = inter_trial - DurBuf/1000;
     
     for param = 1:NumberOfParameters % Outputs each parameter sequentially
         for bit = 1:bytesize % Starts from Most Significant Bit
@@ -121,8 +119,7 @@ for trial = 1:NumberOfTrials
             end
         end
         pause(DurBuf/1000); % Ch2 offset is now set to zero for trial phase
-        inter_trial = inter_trial - DurBuf/1000;
-    
+        
     end
     
     %% ----------------------------   Trial Phase   ---------------------------
@@ -149,14 +146,13 @@ for trial = 1:NumberOfTrials
     %C Go!
     fprintf(FG, 'OUTP1 ON ');
     fprintf(FG, 'OUTP2 ON ');
-    pause(1); % Do we need a pause for these to boot up?
-    inter_trial = inter_trial - 1;
+    pause(0.5); % Do we need a pause for these to boot up?
+    
     fprintf(FG, '*TRG'); % Starts Ch2 and Ch1 at same time
     pause(Parameters(TrialIndices(trial),5)/1000); % Trial duration (ms)
     fprintf(FG, 'OUTP1 OFF');
     fprintf(FG, 'OUTP2 OFF');
-    inter_trial = inter_trial - Parameters(TrialIndices(trial),5)/1000;
-    pause(inter_trial); % inter-trial pause
+    pause(inter_trial - toc); % inter-trial pause
 end
 
 %% ------------------------   A support function   ------------------------
