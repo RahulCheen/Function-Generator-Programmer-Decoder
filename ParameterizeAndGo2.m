@@ -7,7 +7,7 @@ clearvars -except FG;
 %% ---------------   VARIABLES YOU ARE RESPONSIBLE TO SET   ---------------
 
 inter_trial     = 5000;     % time between stimulations [ms]
-bytesize        = 16;       % number of bits to write for each parameter(keep at 16 for parameter values of <= 1000)
+bytesize        = 16;       % number of bits to write for each parameter(keep at 16 for parameter values of <= 65000)
 
 % Import a parameter set list, OR populate a parameter set list
 TF              = [5                        ];  % TRANSDUCER FREQUENCY (must be a single value) [kHz]
@@ -87,11 +87,11 @@ fprintf(FG, ['FREQ ' num2str(Parameters(1,1)*1000)]); % Transducer Frequency (kH
 fprintf(FG,'AM:STAT 1');
 fprintf(FG,'AM:SOUR CH2');
 % Give Ch1 long enough (at least 1.7 sec) to finish warming up.
-pause(2); % This value is arbitrary, but should be sufficiently high
+pause(2); % This value is arbitrary, but should be sufficiently high (>2 seconds)
 
 
 %% --------------   Real code: Loop through indices/trials   --------------
-for trial = 1:NumberOfTrials
+for iTrial = 1:NumberOfTrials
     %% ----------------------------   Data Phase   ----------------------------
     % Ch1 silenced, Ch2 to data mode, first buffer
     tic;
@@ -105,9 +105,9 @@ for trial = 1:NumberOfTrials
     fprintf(FG, 'SOUR2:BURS:STAT 0'); % First buffer
     pause(DurBuf/1000);
     
-    for param = 1:NumberOfParameters % Outputs each parameter sequentially
-        for bit = 1:bytesize % Starts from Most Significant Bit
-            if DataVector(bit,TrialIndices(trial),param) % Outputs bits of trial to be run
+    for iParam = 1:NumberOfParameters % Outputs each parameter sequentially
+        for iBit = 1:bytesize % Starts from Most Significant Bit
+            if DataVector(iBit,TrialIndices(iTrial),iParam) % Outputs bits of trial to be run
                 % MAKE SURE ABOVE IS REFERENCING CORRECTLY
                 fprintf(FG, 'SOUR2:FUNC DC');
                 pause(DurBit/1000); inter_trial = inter_trial - DurBit/1000;
@@ -129,18 +129,18 @@ for trial = 1:NumberOfTrials
     fprintf(FG, 'SOUR2:BURSt:STAT ON');
     
     %B Trial Specific Settings
-    fprintf(FG, ['VOLT ' num2str(Parameters(TrialIndices(trial),2)/1000)]);
-    if Parameters(TrialIndices(trial),3) == 100 % Send a pulse of appropriate length
-        PulsePeriod = Parameters(TrialIndices(trial),5)/1000*2; % Pulse_period = trial_duration, in seconds.
+    fprintf(FG, ['VOLT ' num2str(Parameters(TrialIndices(iTrial),2)/1000)]);
+    if Parameters(TrialIndices(iTrial),3) == 100 % Send a pulse of appropriate length
+        PulsePeriod = Parameters(TrialIndices(iTrial),5)/1000*2; % Pulse_period = trial_duration, in seconds.
         fprintf(FG, ['SOUR2:FUNC:PULS:PER ' num2str(PulsePeriod)]); % ON time plus safety margins
-        fprintf(FG, ['SOUR2:FUNC:PULS:WIDT ' num2str(Parameters(TrialIndices(trial),5)/1000)]); % ON time
+        fprintf(FG, ['SOUR2:FUNC:PULS:WIDT ' num2str(Parameters(TrialIndices(iTrial),5)/1000)]); % ON time
         fprintf(FG, 'SOUR2:FUNC:PULS:TRAN:BOTH MAX'); % Sets rise and fall time to longest possible (1 us).
         fprintf(FG, 'SOUR2:FUNC PULS');
         
     else % Make a square wave envelope of appropriate parameters (Switch to pulse based?)
-        fprintf(FG, ['SOUR2:FREQ '          num2str(Parameters(TrialIndices(trial),4))]); % Modulating Frequency (Hz)
-        fprintf(FG, ['SOUR2:FUNC:SQU:DCYC ' num2str(Parameters(TrialIndices(trial),3))]); % Duty Cycle (%)
-        NCycles = floor(Parameters(TrialIndices(trial),4)*Parameters(TrialIndices(trial),5)/1000);
+        fprintf(FG, ['SOUR2:FREQ '          num2str(Parameters(TrialIndices(iTrial),4))]); % Modulating Frequency (Hz)
+        fprintf(FG, ['SOUR2:FUNC:SQU:DCYC ' num2str(Parameters(TrialIndices(iTrial),3))]); % Duty Cycle (%)
+        NCycles = floor(Parameters(TrialIndices(iTrial),4)*Parameters(TrialIndices(iTrial),5)/1000);
         fprintf(FG, ['SOUR2:BURSt:NCYC '    num2str(NCycles)]); % Number of cycles, (creates 5 ms 1s)
     end
     %C Go!
@@ -149,14 +149,15 @@ for trial = 1:NumberOfTrials
     pause(0.5); % Do we need a pause for these to boot up?
     
     fprintf(FG, '*TRG'); % Starts Ch2 and Ch1 at same time
-    pause(Parameters(TrialIndices(trial),5)/1000); % Trial duration (ms)
+    pause(Parameters(TrialIndices(iTrial),5)/1000); % Trial duration (ms)
     fprintf(FG, 'OUTP1 OFF');
     fprintf(FG, 'OUTP2 OFF');
-    pause(inter_trial - toc); % inter-trial pause
+    pause(inter_trial/1000 - toc); % inter-trial pause
 end
 
 %% ------------------------   A support function   ------------------------
 function outputBit = binarize(inputDecimal,nBits)
+% BINARIZE converts base-10 to binary
 outputBit = zeros(1,nBits);
 workingNumber = inputDecimal; % Algorithm for converting int to binary
 for bit = nBits:-1:1
