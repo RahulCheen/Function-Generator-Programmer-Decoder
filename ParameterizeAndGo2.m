@@ -2,7 +2,7 @@
 % 1) Handling 100% duty cycle
 % 2) Big parameter list
 % 3) RUN SPECIFIC parameter list from globals set up front
-clearvars -except FG;
+clearvars -except Parameters FG;
 
 %% ---------------   VARIABLES YOU ARE RESPONSIBLE TO SET   ---------------
 
@@ -20,17 +20,19 @@ PulseDurations  = [50   200     1000        ];  % pulse durations               
 
 trial_order     = 'random'; % = 'in order';
 FG_ID           = 'MY52600694'; % serial number of new fxn generator
-FG_ID           = 'MY52600670'; % serial number of old fxn generator
+%FG_ID           = 'MY52600670'; % serial number of old fxn generator
 
 DataDir         = 'C:/Data/';           % data directory
 SaveFolderName  = 'Parameter Orders';   % folder subdirectory
 saveName        = uigetfile([DataDir,'*.rhs'],...
     'Select Associated Raw File',...
     'MultiSelect','off');
-try saveName = saveName(1:end-4); % save as the raw data file selected
-catch
-    saveName = rhs_tag(DataDir);  % pulls name of last rhs file created
-end
+
+%A Globals:
+% For handling data cycles
+DurBit = 10;    % ms, bit duration approx 2 ms longer
+DurBuf = 1;     % ms, square wave buffer duration, should be unnecessary
+
 %% -------------------------   Initializations   -------------------------
 Parameters           = allcomb(TF,Amplitudes,DutyCycles,PRFs,PulseDurations); % all possible trial combinations
 [Parameters,NCycles] = RemoveParameterErrors(Parameters); % remove bad parameter combinations
@@ -70,9 +72,16 @@ if strcmp(FG.Status,'closed')
     fopen(FG) % There's some output here, so you know it worked.
 end
 
+
+try saveNamePar = saveName(1:end-4); % save as the raw data file selected
+catch
+    saveNamePar = rhs_tag(DataDir);  % pulls name of last rhs file created
+end
 % SAVE TO FILE, WITH ASSOCIATED RHS FILE TAG
 mkdir([DataDir,SaveFolderName]);
-save([DataDir,SaveFolderName,'/','ParameterOrder_',saveName],'Parameters','DataVector','NumberOfTrials','TrialIndices');
+save([DataDir,SaveFolderName,'/','ParameterOrder_',saveNamePar],...
+    'Parameters','DataVector','NumberOfTrials','TrialIndices',...
+    'DurBit','DurBuf','FG_ID','inter_trial','Data_Dir','saveName');
 
 disp('Parameters (in randomized order):');
 disp(Parameters(TrialIndices,:));
@@ -88,11 +97,6 @@ fprintf(FG, 'SOUR2:FUNC SQU');
 fprintf(FG, 'TRIG2:SOUR BUS');
 fprintf(FG, 'SOUR2:BURS:STAT 1');
 fprintf(FG, 'OUTP2 ON');
-
-%A Globals:
-% For handling data cycles
-DurBit = 10; % ms, bit duration approx 2 ms longer
-DurBuf = 1; % ms, square wave buffer duration, should be unnecessary
 
 %3 Any one-time/last-minute initializing.
 fprintf(FG, ['FREQ ' num2str(Parameters(1,1)*1000)]); % Transducer Frequency (kHz)
@@ -111,7 +115,7 @@ for iTrial = 1:NumberOfTrials
     fprintf(FG, 'SOUR2:FUNC:SQU:DCYC 50');
     fprintf(FG, 'SOUR2:FREQ 7000'); % Creates 5 ms of 1s @ 7kHz
     fprintf(FG, 'OUTP2 ON');
-    pause(0.5); % Pause to separate trials, let OUTP2 recover
+    %pause(0.5); % Pause to separate trials, let OUTP2 recover
     
     
     fprintf(FG, 'SOUR2:BURS:STAT 0'); % First buffer
@@ -122,11 +126,11 @@ for iTrial = 1:NumberOfTrials
             if DataVector(iBit,TrialIndices(iTrial),iParam) % Outputs bits of trial to be run
                 % MAKE SURE ABOVE IS REFERENCING CORRECTLY
                 fprintf(FG, 'SOUR2:FUNC DC');
-                pause(DurBit/1000); inter_trial = inter_trial - DurBit/1000;
+                pause(DurBit/1000);
                 fprintf(FG, 'SOUR2:FUNC SQU');
             else
                 fprintf(FG, 'SOUR2:BURS:STAT 1');
-                pause(DurBit/1000); inter_trial = inter_trial - DurBit/1000;
+                pause(DurBit/1000);
                 fprintf(FG, 'SOUR2:BURS:STAT 0');
             end
         end
@@ -158,7 +162,7 @@ for iTrial = 1:NumberOfTrials
     %C Go!
     fprintf(FG, 'OUTP1 ON ');
     fprintf(FG, 'OUTP2 ON ');
-    pause(0.5); % Do we need a pause for these to boot up?
+    pause(0.25); % Do we need a pause for these to boot up?
     toc;
     fprintf(FG, '*TRG'); % Starts Ch2 and Ch1 at same time
     pause(Parameters(TrialIndices(iTrial),5)/1000); % Trial duration (ms)
