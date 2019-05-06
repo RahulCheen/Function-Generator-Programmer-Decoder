@@ -21,6 +21,8 @@ FG_serialNumber = 'MY52600694';% serial number of fxn generator (old = MY5260067
 
 DataDir         = 'C:/Data/';           % data directory
 SaveFolderName  = 'Parameter Orders';   % folder subdirectory
+saveName        = uigetfile([DataDir,'*.rhs'],'Select Associated Raw File','MultiSelect','off');
+saveName        = saveName(1:end-4);
 %% -------------------------   Initializations   -------------------------
 Parameters           = allcomb(TF,Amplitudes,DutyCycles,PRFs,PulseDurations); % all possible trial combinations
 [Parameters,NCycles] = RemoveParameterErrors(Parameters); % remove bad parameter combinations
@@ -49,14 +51,6 @@ for iTrial = 1:NumberOfTrials
     end
 end
 
-% SAVE TO FILE, WITH TIME STAMP
-%timestamp = clockformat(clock); % get current time, format for output data
-timestamp = rhs_tag(directory1);
-mkdir([DataDir,SaveFolderName]);
-save([DataDir,SaveFolderName,'/','ParameterOrder_',timestamp],'Parameters','DataVector','NumberOfTrials','TrialIndices');
-
-disp('Parameters (in randomized order):');
-disp(Parameters(TrialIndices,:));
 
 %  Establish connection, List global parameters, etc.
 if ~exist('FG','var')
@@ -67,6 +61,14 @@ end
 if strcmp(FG.Status,'closed')
     fopen(FG) % There's some output here, so you know it worked.
 end
+
+% SAVE TO FILE, WITH ASSOCIATED RHS FILE TAG
+mkdir([DataDir,SaveFolderName]);
+save([DataDir,SaveFolderName,'/','ParameterOrder_',saveName],'Parameters','DataVector','NumberOfTrials','TrialIndices');
+
+disp('Parameters (in randomized order):');
+disp(Parameters(TrialIndices,:));
+
 
 %A Establish Connection, reset system
 fprintf(FG, '*RST'); % Resets to factory default. Very quick. Sets OUTP OFF
@@ -168,25 +170,10 @@ for bit = nBits:-1:1
 end
 end
 
-% ---------------------- clockformat support function ---------------------
-function outputstring = clockformat(c)
-format shortg
-for ii=2:6
-    if c(ii) < 10;  cbetween{ii} = '0';
-    else;           cbetween{ii} = ''; end
-end
-outputstring = [...
-    num2str(rem(c(1),2000)),... % year
-    cbetween{2},num2str(c(2)),      ...   	% month
-    cbetween{3},num2str(c(3)),'_',  ...    	% day
-    cbetween{4},num2str(c(4)),      ...  	% hour
-    cbetween{5},num2str(c(5)),      ...   	% minute
-    cbetween{6},num2str(round(c(6)))];      % second
-format short
-end
-
+% ------------------------- rhs_tag support function ---------------------
 function outputstring = rhs_tag(directory1)
-c = dir(directory1);
+% RHS_TAG gets the name of the last file created in the directory specified
+c = dir(directory1); a = [c(:).isdir]; c = c(~a);
 [~,ii] = sort([c(:).datenum],'descend');
 c = c(ii);
 outputstring = c(1).name(1:end-4);
