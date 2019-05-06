@@ -157,7 +157,7 @@ for iTrial = 1:NumberOfTrials
         fprintf(FG, ['SOUR2:FREQ '          num2str(Parameters(TrialIndices(iTrial),4))]); % Modulating Frequency (Hz)
         fprintf(FG, ['SOUR2:FUNC:SQU:DCYC ' num2str(Parameters(TrialIndices(iTrial),3))]); % Duty Cycle (%)
         NCycles = floor(Parameters(TrialIndices(iTrial),4)*Parameters(TrialIndices(iTrial),5)/1000);
-        fprintf(FG, ['SOUR2:BURSt:NCYC '    num2str(NCycles)]); % Number of cycles, (creates 5 ms 1s)
+        fprintf(FG, ['SOUR2:BURSt:NCYC '    num2str(NCycles)]); % Number of cycles
     end
     %C Go!
     fprintf(FG, 'OUTP1 ON ');

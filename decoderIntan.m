@@ -159,7 +159,7 @@ while ii<length(d1) % loop through digitalData
 end
 
 % save to file, in same folder as data
-save(['ExtractedData_',timestamp],'ExtractedData','d1','fileName');
+save(['ExtractedData_',timestamp],'ExtractedData','d1','fileName','fs');
 
 ParameterOrderDecoded = [...
     [ExtractedData(:).carrierFreq]',...
@@ -171,7 +171,11 @@ ParameterOrderDecoded = [...
 disp(['       Number of Trials: ',num2str(length(ParameterOrderDecoded))]);
 disp(['Number of Unique Trials: ',num2str(length(unique(ParameterOrderDecoded,'rows')))]);
 
-assignin('base','ExtractedData',eval('ExtractedData'));
+assignin('base','ExtractedData',        eval('ExtractedData'));
+assignin('base','fs',                   eval('fs'));
+assignin('base','ParameterOrderDecoded',eval('ParameterOrderDecoded'));
+
+
 end
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~ FindBuzz ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
