@@ -4,13 +4,13 @@
 %   the bit map.
 clear
 
-[rawFile,decodedFileName,parameterOrderName] = MatNames;
+[rawFile,trialsName,parameterOrderName] = MatNames;
 
-try load(decodedFileName); % try to load the file
-    nTrials = length(ExtractedData);
+try load(trialsName); % try to load the file
+    nTrials = length(trials);
     % extract bit values and arrange to be of size [nTrials,nParams*bytesize]
     for ii=1:nTrials
-        trialBitValues(ii,:) = [ExtractedData(ii).bitData(:).bitValue];
+        trialBitValues(ii,:) = [trials(ii).bitData(:).bitValue];
     end
 catch
     error('Cannot find ExtractedData file.  Make sure to run decoderIntan first on the raw data file.');

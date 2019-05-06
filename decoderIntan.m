@@ -64,7 +64,7 @@ ii = 2; % start at 2nd time point
 ii=new_ii;
 
 % initialize export structure
-ExtractedData = struct(...
+trials = struct(...
     'bitData',          struct(...
                                 'bitMean',      [],...
                                 'bitValue',     [],...
@@ -102,11 +102,11 @@ while ii<length(d1) % loop through digitalData
             bitstream = d1(endBuzz(1):startBuzz(2)); % stream of bit
             bitMean = mean(bitstream); % average value of the bit data
             bitValue = bitMean > 0.95; % separates 0s from 1s with threshold of 0.95
-            ExtractedData(iTrial).bitData(iBit).bitMean     = bitMean;
-            ExtractedData(iTrial).bitData(iBit).bitValue    = bitValue;
-            ExtractedData(iTrial).bitData(iBit).bitStart    = endBuzz  (1);
-            ExtractedData(iTrial).bitData(iBit).bitEnd      = startBuzz(2);
-            ExtractedData(iTrial).bitData(iBit).bitEnvelope = d1(endBuzz(1):startBuzz(2));
+            trials(iTrial).bitData(iBit).bitMean     = bitMean;
+            trials(iTrial).bitData(iBit).bitValue    = bitValue;
+            trials(iTrial).bitData(iBit).bitStart    = endBuzz  (1);
+            trials(iTrial).bitData(iBit).bitEnd      = startBuzz(2);
+            trials(iTrial).bitData(iBit).bitEnvelope = d1(endBuzz(1):startBuzz(2));
             
         case 0 % treat data as a trial
             
@@ -118,33 +118,33 @@ while ii<length(d1) % loop through digitalData
             stimEnd     = find(trialstream,1,'last' ) + 1;
             
             % get parameter information from the bit data for each trial
-            try trialByte        = [ExtractedData(iTrial).bitData(:).bitValue]; % try to get the information
+            try trialByte        = [trials(iTrial).bitData(:).bitValue]; % try to get the information
                 trial_parameters = debinarize(trialByte,nParams);
-                ExtractedData(iTrial).carrierFreq       = trial_parameters(1);
-                ExtractedData(iTrial).amplitude         = trial_parameters(2);
-                ExtractedData(iTrial).dutyCycle         = trial_parameters(3);
-                ExtractedData(iTrial).modFreq           = trial_parameters(4);
-                ExtractedData(iTrial).pulseDuration     = trial_parameters(5);
+                trials(iTrial).carrierFreq       = trial_parameters(1);
+                trials(iTrial).amplitude         = trial_parameters(2);
+                trials(iTrial).dutyCycle         = trial_parameters(3);
+                trials(iTrial).modFreq           = trial_parameters(4);
+                trials(iTrial).pulseDuration     = trial_parameters(5);
                 
             catch % unable to extract parameters, set to empty, find corresponding trial in ParameterOrder.mat
-                ExtractedData(iTrial).carrierFreq       = [];
-                ExtractedData(iTrial).amplitude         = [];
-                ExtractedData(iTrial).dutyCycle         = [];
-                ExtractedData(iTrial).modFreq           = [];
-                ExtractedData(iTrial).pulseDuration     = [];
+                trials(iTrial).carrierFreq       = [];
+                trials(iTrial).amplitude         = [];
+                trials(iTrial).dutyCycle         = [];
+                trials(iTrial).modFreq           = [];
+                trials(iTrial).pulseDuration     = [];
             
             end
             
-            ExtractedData(iTrial).trialPhaseStart   = endBuzz  (1)+trial_remove;  % start of trial phase
-            ExtractedData(iTrial).trialPhaseEnd     = startBuzz(2)-trial_remove;  % end of trial phase
-            ExtractedData(iTrial).trialEnvelope     = trialstream;   % entire trial phase
-            try ExtractedData(iTrial).stimStart         = stimStart + startBuzz(2); % start of stimulation
-                ExtractedData(iTrial).stimEnd           = stimEnd   + startBuzz(2); % end of stimulation
-                ExtractedData(iTrial).stimEnvelope      = trialstream(stimStart:stimEnd); %
+            trials(iTrial).trialPhaseStart   = endBuzz  (1)+trial_remove;  % start of trial phase
+            trials(iTrial).trialPhaseEnd     = startBuzz(2)-trial_remove;  % end of trial phase
+            trials(iTrial).trialEnvelope     = trialstream;   % entire trial phase
+            try trials(iTrial).stimStart         = stimStart + startBuzz(2); % start of stimulation
+                trials(iTrial).stimEnd           = stimEnd   + startBuzz(2); % end of stimulation
+                trials(iTrial).stimEnvelope      = trialstream(stimStart:stimEnd); %
             catch % replace with empty values if there is no stimulation
-                ExtractedData(iTrial).stimStart         = []; % start of stimulation
-                ExtractedData(iTrial).stimEnd           = []; % end of stimulation
-                ExtractedData(iTrial).stimEnvelope      = []; %
+                trials(iTrial).stimStart         = []; % start of stimulation
+                trials(iTrial).stimEnd           = []; % end of stimulation
+                trials(iTrial).stimEnvelope      = []; %
             end
             iBit = 0; % reset bit counter
             iTrial = iTrial + 1; % increment trial counter
@@ -159,19 +159,20 @@ while ii<length(d1) % loop through digitalData
 end
 
 % save to file, in same folder as data
-save(['ExtractedData_',timestamp],'ExtractedData','d1','fileName','fs');
+save(['trials_',timestamp],'trials','d1','fileName','fs');
 
 ParameterOrderDecoded = [...
-    [ExtractedData(:).carrierFreq]',...
-    [ExtractedData(:).amplitude]',...
-    [ExtractedData(:).dutyCycle]',...
-    [ExtractedData(:).modFreq]',...
-    [ExtractedData(:).pulseDuration]'];
+    [trials(:).carrierFreq]',...
+    [trials(:).amplitude]',...
+    [trials(:).dutyCycle]',...
+    [trials(:).modFreq]',...
+    [trials(:).pulseDuration]'];
 
 disp(['       Number of Trials: ',num2str(length(ParameterOrderDecoded))]);
 disp(['Number of Unique Trials: ',num2str(length(unique(ParameterOrderDecoded,'rows')))]);
 
-assignin('base','ExtractedData',        eval('ExtractedData'));
+% MOVE SELECT VARIABLES TO WORKSPACE
+assignin('base','trials',               eval('trials'));
 assignin('base','fs',                   eval('fs'));
 assignin('base','ParameterOrderDecoded',eval('ParameterOrderDecoded'));
 
