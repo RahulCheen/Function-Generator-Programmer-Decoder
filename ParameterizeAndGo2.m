@@ -6,6 +6,8 @@ clearvars -except FG;
 
 %% ---------------   VARIABLES YOU ARE RESPONSIBLE TO SET   ---------------
 
+% Inter-trial duration saturation occurs at 2000 ms more than the greatest
+% trial duration.
 inter_trial     = 5000;     % time between stimulations [ms]
 bytesize        = 16;       % number of bits to write for each parameter(keep at 16 for parameter values of <= 65000)
 
@@ -17,12 +19,18 @@ PRFs            = [0    10      100     1000];	% pulse repetition frequencies   
 PulseDurations  = [50   200     1000        ];  % pulse durations                               [ms]
 
 trial_order     = 'random'; % = 'in order';
-FG_serialNumber = 'MY52600694';% serial number of fxn generator (old = MY52600670, new = MY52600694)
+FG_ID           = 'MY52600694'; % serial number of new fxn generator
+FG_ID           = 'MY52600670'; % serial number of old fxn generator
 
 DataDir         = 'C:/Data/';           % data directory
 SaveFolderName  = 'Parameter Orders';   % folder subdirectory
-saveName        = uigetfile([DataDir,'*.rhs'],'Select Associated Raw File','MultiSelect','off');
-saveName        = saveName(1:end-4);
+saveName        = uigetfile([DataDir,'*.rhs'],...
+    'Select Associated Raw File',...
+    'MultiSelect','off');
+try saveName = saveName(1:end-4); % save as the raw data file selected
+catch
+    saveName = rhs_tag(DataDir);  % pulls name of last rhs file created
+end
 %% -------------------------   Initializations   -------------------------
 Parameters           = allcomb(TF,Amplitudes,DutyCycles,PRFs,PulseDurations); % all possible trial combinations
 [Parameters,NCycles] = RemoveParameterErrors(Parameters); % remove bad parameter combinations
@@ -54,7 +62,7 @@ end
 
 %  Establish connection, List global parameters, etc.
 if ~exist('FG','var')
-    FG = visa('keysight',['USB0::0x0957::0x2A07::',FG_serialNumber,'::0::INSTR'])
+    FG = visa('keysight',['USB0::0x0957::0x2A07::',FG_ID,'::0::INSTR'])
 end
 % Runs the new FunGen
 % This address depends on the serial number of the machine.
@@ -151,7 +159,7 @@ for iTrial = 1:NumberOfTrials
     fprintf(FG, 'OUTP1 ON ');
     fprintf(FG, 'OUTP2 ON ');
     pause(0.5); % Do we need a pause for these to boot up?
-    
+    toc;
     fprintf(FG, '*TRG'); % Starts Ch2 and Ch1 at same time
     pause(Parameters(TrialIndices(iTrial),5)/1000); % Trial duration (ms)
     fprintf(FG, 'OUTP1 OFF');
