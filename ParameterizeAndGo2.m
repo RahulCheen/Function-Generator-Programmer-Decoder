@@ -28,11 +28,13 @@ saveName        = uigetfile([DataDir,'*.rhs'],...
     'Select Associated Raw File',...
     'MultiSelect','off');
 
-%A Globals:
-% For handling data cycles
-DurBit = 10;    % ms, bit duration approx 2 ms longer
-DurBuf = 1;     % ms, square wave buffer duration, should be unnecessary
 
+% For handling data cycles
+DurBit = 5;     % bit duration approx 2 ms longer   [ms] 
+DurBuf = 1;     % square wave buffer duration       [ms]
+
+% For pauses and timing post-processing
+DurBeforeStim = 500; % pause between data phase and trial phase [ms]
 %% -------------------------   Initializations   -------------------------
 Parameters           = allcomb(TF,Amplitudes,DutyCycles,PRFs,PulseDurations); % all possible trial combinations
 [Parameters,NCycles] = RemoveParameterErrors(Parameters); % remove bad parameter combinations
@@ -162,10 +164,11 @@ for iTrial = 1:NumberOfTrials
     %C Go!
     fprintf(FG, 'OUTP1 ON ');
     fprintf(FG, 'OUTP2 ON ');
-    pause(0.25); % Do we need a pause for these to boot up?
-    toc;
+    pause(DurBeforeStim); % Do we need a pause for these to boot up?
+    
     fprintf(FG, '*TRG'); % Starts Ch2 and Ch1 at same time
     pause(Parameters(TrialIndices(iTrial),5)/1000); % Trial duration (ms)
+    
     fprintf(FG, 'OUTP1 OFF');
     fprintf(FG, 'OUTP2 OFF');
     pause(inter_trial/1000 - toc); % inter-trial pause
