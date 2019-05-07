@@ -24,20 +24,15 @@ function decoderIntan(nParams)
 % Errors should not cause the code to quit, but should instead place an empty array in the location
 % of the error.
 if ~exist('nParams','var')
-    nParams = 5;
+    nParams = 5; % default to 5 parameters
 end
 
 addpath(cd);
 addpath(pwd);
 
-[file1,path1] = uigetfile('*.rhs','Select Raw Data','MultiSelect','off');
+[dataName,trialsName,~,rawDataName] = MatNames;
 
-c = strsplit(file1,'.');
-timestamp = c{1};
-
-fileName = [path1,file1(1:end-3),'mat'];
-cd(path1);
-try load(fileName,'*dig*','*adc*','ana*','freq*','v*'); % load in all variables with these
+try load(dataName,'*dig*','*adc*','ana*','freq*','v*'); % load in all variables with these
 catch
     error('Must run conversion scripts: convert_rhs.m or convert_dat.m');
 end
@@ -159,7 +154,7 @@ while ii<length(d1) % loop through digitalData
 end
 
 % save to file, in same folder as data
-save(['trials_',timestamp],'trials','d1','fileName','fs');
+save(trialsName,'trials','d1','rawDataName','fs');
 
 ParameterOrderDecoded = [...
     [trials(:).carrierFreq]',...
