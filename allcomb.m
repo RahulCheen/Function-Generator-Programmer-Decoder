@@ -3,7 +3,7 @@ function A = allcomb(varargin)
 % ALLCOMB - All combinations
 %    B = ALLCOMB(A1,A2,A3,...,AN) returns all combinations of the elements
 %    in the arrays A1, A2, ..., and AN. B is P-by-N matrix where P is the product
-%    of the number of elements of the N inputs. 
+%    of the number of elements of the N inputs.
 %    This functionality is also known as the Cartesian Product. The
 %    arguments can be numerical and/or characters, or they can be cell arrays.
 %
@@ -33,12 +33,12 @@ function A = allcomb(varargin)
 %       %       'Bye'    [1x3 double]      [] } ; % a 8-by-3 cell array
 %
 %    ALLCOMB(..., 'matlab') causes the first column to change fastest which
-%    is consistent with matlab indexing. Example: 
-%      allcomb(1:2,3:4,5:6,'matlab') 
+%    is consistent with matlab indexing. Example:
+%      allcomb(1:2,3:4,5:6,'matlab')
 %      % -> [ 1 3 5 ; 1 4 5 ; 1 3 6 ; ... ; 2 4 6 ]
 %
 %    If one of the N arguments is empty, ALLCOMB returns a 0-by-N empty array.
-%    
+%
 %    See also NCHOOSEK, PERMS, NDGRID
 %         and NCHOOSE, COMBN, KTHCOMBN (Matlab Central FEX)
 
@@ -82,9 +82,9 @@ if any(cellfun('isempty', args)) % check for empty inputs
     warning('ALLCOMB:EmptyInput','One of more empty inputs result in an empty output.') ;
     A = zeros(0, NC) ;
 elseif NC == 0 % no inputs
-    A = zeros(0,0) ; 
+    A = zeros(0,0) ;
 elseif NC == 1 % a single input, nothing to combine
-    A = args{1}(:) ; 
+    A = args{1}(:) ;
 else
     isCellInput = cellfun(@iscell, args) ;
     if any(isCellInput)
