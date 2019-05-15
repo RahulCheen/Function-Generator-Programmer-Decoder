@@ -14,7 +14,7 @@ for ii=1:nTrials
     modFreq       = trials(ii).modFreq;
     DC            = trials(ii).dutyCycle;
     
-    stimChanges = [0,diff(stimEnvelope)];
+    stimChanges = [0;diff(stimEnvelope)];
     nRises = sum(stimChanges == 1);
     nPeaks = length(findpeaks(stimEnvelope));
     
@@ -26,12 +26,12 @@ for ii=1:nTrials
     plot(t,trialEnvelope,'LineWidth',0.1);
     title(['Trial #',num2str(ii),' // Pulse Duration: ',num2str(pulseDuration),' s']); 
     xlim([0 inf]);
-    set(gca,'XTick',[0 0.5 (0.5+pulseDuration) inf]);
+    set(gca,'XTick',[0 0.25 (0.25+pulseDuration) inf]);
     
     subplot(2,1,2);
     plot(t_stim,stimEnvelope,'LineWidth',0.1);
-    xlim([-0.5 t(end)-0.5]);
-    set(gca,'XTick',[-.5 0 (pulseDuration)]);
+    xlim([-0.25 t(end)-0.25]);
+    set(gca,'XTick',[-.25 0 (pulseDuration)]);
     xlabel('time [s]');
     
     pause

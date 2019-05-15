@@ -12,7 +12,7 @@ inter_trial     = 5000;     % time between stimulations [ms]
 bytesize        = 16;       % number of bits to write for each parameter(keep at 16 for parameter values of <= 65000)
 
 % Import a parameter set list, OR populate a parameter set list
-TF              = [5                        ];  % TRANSDUCER FREQUENCY (must be a single value) [kHz]
+TF              =  5                         ;  % TRANSDUCER FREQUENCY (must be a single value) [kHz]
 Amplitudes      = [25   100     400         ];  % voltages to achieve 0.1, 2, and 40 W/cm^2     [mV]
 DutyCycles      = [5    50      100         ];	% duty cycles                                   [%]
 PRFs            = [0    10      100     1000];	% pulse repetition frequencies                  [Hz]
@@ -83,13 +83,14 @@ end
 mkdir([DataDir,SaveFolderName]);
 save([DataDir,SaveFolderName,'/','ParameterOrder_',saveNamePar],...
     'Parameters','DataVector','NumberOfTrials','TrialIndices',...
-    'DurBit','DurBuf','FG_ID','inter_trial','Data_Dir','saveName');
+    'DurBit','DurBuf','FG_ID','inter_trial','Data_Dir','saveName',...
+    'DurBeforeStim');
 
 disp('Parameters (in randomized order):');
 disp(Parameters(TrialIndices,:));
 
 
-%A Establish Connection, reset system
+%% A Establish Connection, reset system
 fprintf(FG, '*RST'); % Resets to factory default. Very quick. Sets OUTP OFF
 fprintf(FG, 'OUTP2:LOAD INF'); % Ch2 needs time to warm up.
 fprintf(FG, 'SOUR2:VOLT 5');

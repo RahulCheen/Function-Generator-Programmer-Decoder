@@ -133,8 +133,8 @@ while ii<length(d1) % loop through digitalData
             trials(iTrial).trialPhaseStart   = endBuzz  (1)+trial_remove;  % start of trial phase
             trials(iTrial).trialPhaseEnd     = startBuzz(2)-trial_remove;  % end of trial phase
             trials(iTrial).trialEnvelope     = trialstream;   % entire trial phase
-            try trials(iTrial).stimStart         = stimStart + startBuzz(2); % start of stimulation
-                trials(iTrial).stimEnd           = stimEnd   + startBuzz(2); % end of stimulation
+            try trials(iTrial).stimStart         = stimStart + endBuzz(1); % start of stimulation
+                trials(iTrial).stimEnd           = stimEnd   + endBuzz(1); % end of stimulation
                 trials(iTrial).stimEnvelope      = trialstream(stimStart:stimEnd); %
             catch % replace with empty values if there is no stimulation
                 trials(iTrial).stimStart         = []; % start of stimulation
