@@ -1,28 +1,31 @@
 function decoderIntan(nParams)
 % DECODERINTAN reads digital data from the function generator (via Intan), and separates out binary
 % parameter information and stimulation envelopes.  Output is a file called 'ExtractedData.mat' that
-% contains a structure called ExtractedData, which contains information for each trial found in the
-% digital channel data.  Information within variable ExtractedData:
+% contains a structure called 'trials', which contains information for each trial found in the digital
+% channel data.  Information within variable 'trials':
 %
-%           BitData: sub-structure containing information for each bit in the corresponding trial:
-%                       bitMean: average value of the bit information
-%                      bitValue: whether it's a 1 or 0.  Based on thresholding the bitMean at 0.95
-%                      bitStart: start of the bit information within the digital data
-%                        bitEnd: end of the bit information within the digital data
-%     trialEnvelope: trial information in the digital data
-%      stimEnvelope: stimulation envelope, within the trial data
-%   trialPhaseStart: start of the trial phase, reference to start of digital data
-%     trialPhaseEnd: end of the trial phase, reference to start of digital data
-%         stimStart: start of the stimulation, reference to the start of the digital data
-%           stimEnd: end of the stimulation, reference to the start of the digital data
-%       carrierFreq: decoded carrier frequency for the trial [kHz]
-%         amplitude: decoded amplitude for the trial (input to fxn generator) [mV]
-%         dutyCycle: decoded duty cycle for the trial [%]
-%           modFreq: decoded modulating frequency for the trial [Hz]
-%     pulseDuration: decoded pulse duration for the trial [ms]
+%           BitData| sub-structure containing information for each bit in the corresponding trial:
+%                  ||   bitMean: average value of the bit information
+%                  ||  bitValue: whether it's a 1 or 0.  Based on thresholding bitMean at 0.95
+%                  ||  bitStart: start of the bit information within the digital data
+%                  ||    bitEnd: end of the bit information within the digital data
+%                  ||    bitEnv: digital channel information in the bit
+%          trialEnv| trial information in the digital data
+%           stimEnv| stimulation envelope, within the trial data
+%        trialStart| start of the trial phase, reference to start of digital data
+%          trialEnd| end of the trial phase, reference to start of digital data
+%         stimStart| start of the stimulation, reference to the start of the digital data
+%           stimEnd| end of the stimulation, reference to the start of the digital data
+%       carrierFreq| decoded carrier frequency for the trial [kHz]
+%         amplitude| decoded amplitude for the trial (input to fxn generator) [mV]
+%         dutyCycle| decoded duty cycle for the trial [%]
+%           modFreq| decoded modulating frequency for the trial [Hz]
+%     pulseDuration| decoded pulse duration for the trial [ms]
 %
 % Errors should not cause the code to quit, but should instead place an empty array in the location
 % of the error.
+
+%% Initializations // File Loading
 if ~exist('nParams','var')
     nParams = 5; % default to 5 parameters
 end
@@ -65,54 +68,83 @@ trials = struct(...
                                 'bitValue',     [],...
                                 'bitStart',     [],...
                                 'bitEnd',       [],...
-                                'bitEnvelope',  []...
-                                ),...
-    'trialEnvelope',    [],...
-    'stimEnvelope',     [],...
-    'trialPhaseStart',  [],...
-    'trialPhaseEnd',    [],...
-    'stimStart',        [],...
-    'stimEnd',          [],...
-    'carrierFreq',      [],...
-    'amplitude',        [],...
-    'dutyCycle',        [],...
-    'modFreq',          [],...
-    'pulseDuration',   	[]...
+                                'bitEnv',  []...
+                                )...
+    ,'trialEnv',         []...
+    ,'stimEnv',          []...
+    ,'trialStart',       []...
+    ,'trialEnd',         []...
+    ,'stimStart',        []...
+    ,'stimEnd',          []...
+    ,'stimDur',          []...
+    ,'carrierFreq',      []...
+    ,'amplitude',        []...
+    ,'dutyCycle',        []...
+    ,'modFreq',          []...
+    ,'pulseDuration',    []...
     );
+
+%% MAIN LOOP
+% Goes through the entire digital data, finding buzzes and decoding what's in-between
 iBit = 0; iTrial = 1;
 while ii<length(d1) % loop through digitalData
     disp(['Trial #',num2str(iTrial),', Bit ',num2str(iBit)]);
     % find the next buzz
 
-    [startBuzz(2),endBuzz(2),new_ii] = findBuzz(d1,ii);
+    [startBuzz(2),endBuzz(2),new_ii] = findBuzz(d1,ii); % Call findBuzz
     
     % inter-buzz duration
     lbetweenBuzz = startBuzz(2)-endBuzz(1);
-    
     bit = lbetweenBuzz < fs/2; % bit information is always less than 0.5 seconds
     
     switch bit
         case 1 % treat data as a bit
+            %% BIT DATA
             iBit = iBit + 1; % go to next bit
             bitstream = d1(endBuzz(1):startBuzz(2)); % stream of bit
             bitMean = mean(bitstream); % average value of the bit data
             bitValue = bitMean > 0.95; % separates 0s from 1s with threshold of 0.95
-            trials(iTrial).bitData(iBit).bitMean     = bitMean;
-            trials(iTrial).bitData(iBit).bitValue    = bitValue;
-            trials(iTrial).bitData(iBit).bitStart    = endBuzz  (1);
-            trials(iTrial).bitData(iBit).bitEnd      = startBuzz(2);
-            trials(iTrial).bitData(iBit).bitEnvelope = d1(endBuzz(1):startBuzz(2));
-            
+            trials(iTrial).bitData(iBit).bitMean    = bitMean;
+            trials(iTrial).bitData(iBit).bitValue   = bitValue;
+            trials(iTrial).bitData(iBit).bitStart   = endBuzz  (1);
+            trials(iTrial).bitData(iBit).bitEnd     = startBuzz(2);
+            trials(iTrial).bitData(iBit).bitEnv     = d1(endBuzz(1):startBuzz(2));
+        
         case 0 % treat data as a trial
-            
+            %% TRIAL DATA
+            %% Trial Event markers
             trial_remove = 100;
-            trialstream = d1(endBuzz(1)+trial_remove:startBuzz(2)-trial_remove); % trial stream, remove 100 points from either end
             
+            try trialstream = d1(endBuzz(1)+trial_remove:startBuzz(2)-trial_remove); % trial stream, remove 100 points from either end
+            catch
+                trialstream = d1(endBuzz(1)+trial_remove:end);
+            end
             
+            trials(iTrial).trialStart       = endBuzz  (1)+trial_remove;  % start of trial phase
+            trials(iTrial).trialEnd         = startBuzz(2)-trial_remove;  % end of trial phase
+            trials(iTrial).trialEnv     	= trialstream;   % entire trial phase
+            
+            %% Stimulation Events markers
             stimStart   = find(trialstream,1,'first') - 1;
             stimEnd     = find(trialstream,1,'last' ) + 1;
             
-            % get parameter information from the bit data for each trial
+            try d1(stimStart + endBuzz(1));     % check if this value is within the digital signal
+                d1(stimEnd   + endBuzz(1));
+                
+                % stimulation markers
+                trials(iTrial).stimStart   	= stimStart + endBuzz(1); % start of stimulation
+                trials(iTrial).stimEnd     	= stimEnd   + endBuzz(1); % end of stimulation
+                trials(iTrial).stimEnv      = trialstream(stimStart:stimEnd); 
+                trials(iTrial).stimDur      = trials(iTrial).stimStart./fs;
+                
+            catch % replace with empty values if an error occurred in finding stim onset/offset
+                trials(iTrial).stimStart  	= []; % start of stimulation
+                trials(iTrial).stimEnd    	= []; % end of stimulation
+                trials(iTrial).stimEnv      = []; %
+            end
+            
+            
+            %% Decoded Stimulation Parameters
             try trialByte        = [trials(iTrial).bitData(:).bitValue]; % try to get the information
                 trial_parameters = debinarize(trialByte,nParams);
                 trials(iTrial).carrierFreq       = trial_parameters(1);
@@ -129,32 +161,22 @@ while ii<length(d1) % loop through digitalData
                 trials(iTrial).pulseDuration     = [];
             
             end
-            
-            trials(iTrial).trialPhaseStart   = endBuzz  (1)+trial_remove;  % start of trial phase
-            trials(iTrial).trialPhaseEnd     = startBuzz(2)-trial_remove;  % end of trial phase
-            trials(iTrial).trialEnvelope     = trialstream;   % entire trial phase
-            try trials(iTrial).stimStart         = stimStart + endBuzz(1); % start of stimulation
-                trials(iTrial).stimEnd           = stimEnd   + endBuzz(1); % end of stimulation
-                trials(iTrial).stimEnvelope      = trialstream(stimStart:stimEnd); %
-            catch % replace with empty values if there is no stimulation
-                trials(iTrial).stimStart         = []; % start of stimulation
-                trials(iTrial).stimEnd           = []; % end of stimulation
-                trials(iTrial).stimEnvelope      = []; %
-            end
             iBit = 0; % reset bit counter
             iTrial = iTrial + 1; % increment trial counter
     end
     
+    %% NEXT TRIAL BUZZ SHIFT
     % shift 2nd buzz to first position
     startBuzz(1) = startBuzz(2);
-    endBuzz(1)   = endBuzz(2);
+    endBuzz  (1) = endBuzz  (2);
     
     ii=new_ii; % start looking where you left off
     
 end
 
+%% SAVE TO FILE // MOVE TO WORKSPACE
 % save to file, in same folder as data
-save(trialsName,'trials','d1','rawDataName','fs');
+save(trialsName,'trials','rawDataName','fs');
 
 ParameterOrderDecoded = [...
     [trials(:).carrierFreq]',...

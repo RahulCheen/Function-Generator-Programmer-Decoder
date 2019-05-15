@@ -146,7 +146,6 @@ for iTrial = 1:NumberOfTrials
     %A Trial Phase Settings
     fprintf(FG, 'OUTP2 OFF'); % Turn this off to prevent false 1s.
     fprintf(FG, 'SOUR2:BURSt:STAT ON');
-    
     %B Trial Specific Settings
     fprintf(FG, ['VOLT ' num2str(Parameters(TrialIndices(iTrial),2)/1000)]);
     if Parameters(TrialIndices(iTrial),3) == 100 % Send a pulse of appropriate length
