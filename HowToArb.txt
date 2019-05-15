@@ -1,0 +1,46 @@
+Here's a summary of the current state of our work on ArbWave.
+
+How to send a valid command
+	Must have established connection: create a VISA object named (e.g.) FG with appropriate features
+		FG = visa('keysight','USB0::0x0957::0x2A07::MY52600694::0::INSTR')
+	Open the connection
+		fopen(FG)
+	Now, to send a command to the FunGen use
+		fprintf(<name>, <command string>)
+		e.g., fprintf(FG, '*RST')
+	In the manual, the command that should be sent is the string itself, e.g. *RST .
+
+Our constraints
+	Arb segments: we have 1 million datapoints for all segments combined. They'll be broken into
+	 roughly half for rises, half for falls, and a handful (maybe 1?) for amplitudes.
+		Ideally, we'll only need one rise and one fall and two steady voltages, and we'll just scale
+		 them appropriately. Standardize the arb functions' amplitudes to 1V.
+		Volatile memory: load the relevant sequences to volatile memory as an initialization step.
+	Arb sequences: we have 32 sequences we can use. This is sufficient for all 100% DC trials.
+		I believe we can download all th sequences and run them at will, but we may need to load them
+		 at runtime. That would be a trivial fix with the proposed system.
+	Filtering: the step filter is the best filter for our purposes, I believe.	
+
+Our command of interest
+	Load appropriate ArbWave segments (list of values), such as rise, fall, steady
+		The functions should be written from 0 to x (1V?).	DSSC will have to be on for this to work.
+	Construct appropriate ArbWave sequence (list of segments to run, for how long, which triggers)
+		Probable sequence: 0V (repeat until trigger), Rising (1), MaxV (for duration), Falling (1),
+		 0V (forever).
+	Send instructions with fprintf
+		Turn off channels
+		Turn on DSSC for transducer channel
+		Turn on Arb (download sequence?)
+		Trigger sequence
+	Timing may be an issue. When do we need to load segs and seqs? Run long enough, even if the
+	 instruction queue filled and was delayed. May require a status check. See IEEE commands.
+		We can use fscanf to get confirmation the queue is empty, pretty sure
+		
+Details of the command
+	Jan wants to have, for the 100% DC trials, the same onset/offset window as used by prior work.
+	 I haven't been able to find what that onset/offset time is. It is probably an onset on the order
+	 of 1 millisecond, and it's almost certainly a Hann window (cosine+1).
+	The Sync signal that comes out the front of the FG could possibly give us a TTL signal that is
+	 locked into a specific moment in the ArbWave. I don't think it could be used to do data phases,
+	 though, so it probably can't just replace the digital signal. But perhaps we could lock it to the
+	 modulating signal?

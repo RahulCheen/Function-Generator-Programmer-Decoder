@@ -1,0 +1,36 @@
+This document explains how sequences work and what sequences we'll generate
+
+Anatomy of a sequence upload:
+[SOURce[1|2]:]DATA:SEQuence <block_descriptor>
+	SOUR2:DATA:SEQ #3415"NameOfSeq.seq","INT:\FirstArb.arb",2,repeat,maintain..
+Anatomy of <block_descriptor> (from the manual)
+	<block_descriptor> is of the format #<n><n digits><sequence name>,
+	 <arb name1>,<repeat count1>,<play control1>,<marker mode1>,
+	 <marker point1>, <arb name2>,<repeat count2>,<play control2>,
+	 <marker mode2>, <marker point2>, and so on.
+	It has a descriptive section that has to be generated post hoc:
+		#<n><n digits><sequence name>,
+			<n> specifies the number of digits of <n digits>
+			<n digits> is the number of data bytes to come
+				After generating the segment list and sequence name, use a
+				 text editor to count the bytes of the signal. Probably start
+				 counting from the first letter of <sequence name> (NOT ") (?).
+	And the segment list (comprising N segment specification blocks):
+	<arb name1>,<repeat count1>,<play control1>,<marker mode1>,<marker point1>,
+	 SPACE <arb name2>, ...
+		<arb nameN> The full path of the segment file, in ""
+		<repeat countN> Number of times to repeat (if applicable, otherwise 0)
+		<play controlN> How/if the sequence repeats. Relevant codes:
+			once: segment runs once
+				use for rise and fall segments
+			repeat: segment repeats number of times in <repeat countN>
+				use for the high period of the envelope
+			repeatInf: repeat indefinitely
+				use for the post-fall 0 of the envelope
+			repeatTilTrig: repeat until a trigger
+				use for the pre-rise 0 of the envelope
+		<marker modeN> Not important: write maintain for this.
+		<marker pointN> Not important: write 4 for this. Controls sync signal.
+		SPACE: The only place that spaces occur in the entire
+		 <block_descriptor> is between segment specification blocks.
+			I imagine that newlines would mess things up, but I need to check.
