@@ -27,11 +27,6 @@ for ii=1:length(trials)
     end
     
     
-    
-    
-    
-    
-    
 end
 
 save(['amp_',dataFile],'ampData');
