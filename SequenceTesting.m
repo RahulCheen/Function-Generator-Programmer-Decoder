@@ -4,7 +4,7 @@ if ~exist('FG','var')
         fopen(FG) % There's some output here, so you know it worked.
 end
 
-switch 2
+switch 1
     
     case 1 % Test if I can upload a sequence with pre-existing segments
         fprintf(FG,'DATA:VOL:CLE'); % CLEar VOLatile memory
@@ -17,8 +17,8 @@ switch 2
         
     case 2 % Test if I can upload a segment
         fprintf(FG,'DATA:VOL:CLE');
-        fprintf(FG,'DATA:ARB:DAC Noisy,-32767,32767');
-        
+        fprintf(FG,'DATA:ARB:DAC attempt,-32767,-30000,-25000,-20000,-15000,-10000,-5000,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,20,40,80,160,320,640,1280,2560,5120,10240,20480,32767,0,0,0,0,0,0,0,0,0,0');
+        % Always has 3 MSa/s and 100 mV ptp.
 
     case 3 % Test if I can upload a sequence with uploaded segments
         x=3;
