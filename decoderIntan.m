@@ -22,7 +22,7 @@ function decoderIntan(nParams)
 %           modFreq| decoded modulating frequency for the trial [Hz]
 %     pulseDuration| decoded pulse duration for the trial [ms]
 %
-% Errors should not cause the code to quit, but should instead place an empty array in the location
+% Errors should not cause the code to quit, but should instead place empty values in the location
 % of the error.
 
 %% Initializations // File Loading
