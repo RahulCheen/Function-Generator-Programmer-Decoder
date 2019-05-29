@@ -18,11 +18,11 @@ pulseduration   = unique(Parameters(:,5));
 
 if any(DCs == 100)                  % if any of the duty cycles is 100%
     if ~any(modfreqs==0)            % if there aren't any 0 Hz modulating frequencies
-        modfreqs = [0,modfreqs];    % add a 0 Hz modulating frequency
+        modfreqs = [0;modfreqs];    % add a 0 Hz modulating frequency
     end
 elseif any(modfreqs == 0)   % if there is any 0 Hz modulating frequency
     if ~any(DCs == 100)     % if there aren't any 100% duty cycles
-        DCs = [DCs,100];    % add a 100% duty cycle
+        DCs = [DCs;100];    % add a 100% duty cycle
     end
 end
 

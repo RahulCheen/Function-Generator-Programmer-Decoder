@@ -12,11 +12,11 @@ inter_trial     = 5000;     % time between stimulations [ms]
 bytesize        = 16;       % number of bits to write for each parameter(keep at 16 for parameter values of <= 65000)
 
 % Import a parameter set list, OR populate a parameter set list
-TF              =  5                         ;  % TRANSDUCER FREQUENCY (must be a single value) [kHz]
-Amplitudes      = [25   100     400         ];  % voltages to achieve 0.1, 2, and 40 W/cm^2     [mV]
-DutyCycles      = [5    50      100         ];	% duty cycles                                   [%]
-PRFs            = [0    10      100     1000];	% pulse repetition frequencies                  [Hz]
-PulseDurations  = [50   200     1000        ];  % pulse durations                               [ms]
+TF              =  5                     ;  % TRANSDUCER FREQUENCY (must be a single value) [kHz]
+Amplitudes      = [25   100     400    	];  % voltages to achieve 0.1, 2, and 40 W/cm^2     [mV]
+DutyCycles      = [5    50      100     ];	% duty cycles                                   [%]
+PRFs            = [10   100     1000    ];	% pulse repetition frequencies                  [Hz]
+PulseDurations  = [50   200     1000   	];  % pulse durations                               [ms]
 
 trial_order     = 'random'; % = 'in order';
 FG_ID           = 'MY52600694'; % serial number of new fxn generator
@@ -66,7 +66,7 @@ end
 
 %  Establish connection, List global parameters, etc.
 if ~exist('FG','var')
-    FG = visa('keysight',['USB0::0x0957::0x2A07::',FG_ID,'::0::INSTR'])
+    FG = visa('keysight',['USB0::2391::10759::',FG_ID,'::0::INSTR'])
 end
 % Runs the new FunGen
 % This address depends on the serial number of the machine.
