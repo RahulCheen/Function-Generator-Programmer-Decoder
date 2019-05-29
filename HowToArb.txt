@@ -27,9 +27,12 @@ Our command of interest
 	Construct appropriate ArbWave sequence (list of segments to run, for how long, which triggers)
 		Probable sequence: 0V (repeat until trigger), Rising (1), MaxV (for duration), Falling (1),
 		 0V (forever).
+        Note: For non-100% DC: It may be possible to run sequences as segments of sequences.
 	Send instructions with fprintf
 		Turn off channels
 		Turn on DSSC for transducer channel
+            Possibly unnecessary: if the voltage and offset from other waveforms is maintained (or
+             can be reimposed), then we'd just scale the arb from -1 to 1, not 0 to 1.
 		Turn on Arb (download sequence?)
 		Trigger sequence
 	Timing may be an issue. When do we need to load segs and seqs? Run long enough, even if the
