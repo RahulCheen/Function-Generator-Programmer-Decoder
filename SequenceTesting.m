@@ -18,16 +18,16 @@ switch 1
         fprintf(FG,'MMEM:LOAD:DATA1 "DC0.arb"');
                 
         
-        command0 = '"testInterSeq.arb","INT:\ARB_001.arb",1,once,maintain,4,"INT:\DC5.arb",1,once,maintain,4';
+        command0 = '"testInterSeq","INT:\ARB_001.arb",1,once,maintain,4,"INT:\DC5.arb",1,once,maintain,4';
          fprintf(FG,['DATA:SEQ #',...
             num2str(floor(log10(length(command0)))+1),...
             num2str(length(command0)),...
             command0]); % Load SEQuence
         
-        fprintf(FG,'MMEM:STOR:DATA "INT:\testInterSeq.arb"');
-        fprintf(FG,'MMEM:LOAD:DATA1 "testInterSeq.arb"');
+        fprintf(FG,'MMEM:STOR:DATA "INT:\testInterSeq"');
+        fprintf(FG,'MMEM:LOAD:DATA1 "testInterSeq"');
         
-        command1 = '"testSeq.seq","INT:DC0.arb",1,repeatTilTrig,maintain,4,"INT:\testInterSeq.arb",1,repeat,maintain,4'; % Load SEQuence
+        command1 = '"testSeq.seq","INT:DC0.arb",1,once,maintain,4,"INT:\testInterSeq",1,repeat,maintain,4'; % Load SEQuence
         fprintf(FG,['DATA:SEQ #',...
             num2str(floor(log10(length(command1)))+1),...
             num2str(length(command1)),...
