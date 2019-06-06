@@ -40,25 +40,25 @@ Parameters           = allcomb(TF,Amplitudes,DutyCycles,PRFs,PulseDurations); % 
 [Parameters,NCycles] = RemoveParameterErrors(Parameters); % remove bad parameter combinations
 bytesize = max([nextpow2(max(max(Parameters))),bytesize]); % take maximum of needed bytesize and user-input bytesize
 
-NumberOfTrials      = size(Parameters,1);
-NumberOfParameters  = size(Parameters,2);
+nTrials      = size(Parameters,1);
+nParams      = size(Parameters,2);
 
-disp(['Number of Trials: ',num2str(NumberOfTrials)]);
+disp(['Number of Trials: ',num2str(nTrials)]);
 
 %2 Create randomized index list, report it.
 %A Create random permutation from 1 to number of trials
 rng('shuffle'); % Just in case.
 if strcmp(trial_order,'random')
-    TrialIndices = randperm(NumberOfTrials); % Creates list
+    TrialIndices = randperm(nTrials); % Creates list
 else
-    TrialIndices = 1:NumberOfTrials; % Creates list only good for testing
+    TrialIndices = 1:nTrials; % Creates list only good for testing
 end
 %B Write list to file with time stamp?
 
 %B Binarize parameters all at once, no special buffers needed:
-DataVector = zeros(bytesize, NumberOfTrials, NumberOfParameters);
-for iTrial = 1:NumberOfTrials
-    for iParam = 1:NumberOfParameters
+DataVector = zeros(bytesize, nTrials, nParams);
+for iTrial = 1:nTrials
+    for iParam = 1:nParams
         DataVector(:,iTrial,iParam) = binarize(Parameters(iTrial,iParam),bytesize);
     end
 end
@@ -74,17 +74,16 @@ if strcmp(FG.Status,'closed')
     fopen(FG) % There's some output here, so you know it worked.
 end
 
-
-try saveNamePar = saveName(1:end-4); % save as the raw data file selected
-catch
-    saveNamePar = rhs_tag(DataDir);  % pulls name of last rhs file created
-end
+% try saveNamePar = saveName(1:end-4); % save as the raw data file selected
+% catch
+%     saveNamePar = rhs_tag(DataDir);  % pulls name of last rhs file created
+% end
 % SAVE TO FILE, WITH ASSOCIATED RHS FILE TAG
-mkdir([DataDir,SaveFolderName]);
-save([DataDir,SaveFolderName,'/','ParameterOrder_',saveNamePar],...
-    'Parameters','DataVector','NumberOfTrials','TrialIndices',...
-    'DurBit','DurBuf','FG_ID','inter_trial','Data_Dir','saveName',...
-    'DurBeforeStim');
+% mkdir([DataDir,SaveFolderName]);
+% save([DataDir,SaveFolderName,'/','ParameterOrder_',saveNamePar],...
+%     'Parameters','DataVector','NumberOfTrials','TrialIndices',...
+%     'DurBit','DurBuf','FG_ID','inter_trial','Data_Dir','saveName',...
+%     'DurBeforeStim');
 
 disp('Parameters (in randomized order):');
 disp(Parameters(TrialIndices,:));
@@ -92,6 +91,7 @@ disp(Parameters(TrialIndices,:));
 
 %% A Establish Connection, reset system
 fprintf(FG, '*RST'); % Resets to factory default. Very quick. Sets OUTP OFF
+ARBgenerate;
 fprintf(FG, 'OUTP2:LOAD INF'); % Ch2 needs time to warm up.
 fprintf(FG, 'SOUR2:VOLT 5');
 fprintf(FG, 'SOUR2:VOLT:OFFS 2.5');
@@ -105,12 +105,12 @@ fprintf(FG, 'OUTP2 ON');
 fprintf(FG, ['FREQ ' num2str(Parameters(1,1)*1000)]); % Transducer Frequency (kHz)
 fprintf(FG,'AM:STAT 1');
 fprintf(FG,'AM:SOUR CH2');
-% Give Ch1 long enough (at least 1.7 sec) to finish warming up.
+
 pause(2); % This value is arbitrary, but should be sufficiently high (>2 seconds)
 
 
 %% --------------   Real code: Loop through indices/trials   --------------
-for iTrial = 1:NumberOfTrials
+for iTrial = 1:nTrials
     %% ----------------------------   Data Phase   ----------------------------
     % Ch1 silenced, Ch2 to data mode, first buffer
     tic;
@@ -124,7 +124,7 @@ for iTrial = 1:NumberOfTrials
     fprintf(FG, 'SOUR2:BURS:STAT 0'); % First buffer
     pause(DurBuf/1000);
     
-    for iParam = 1:NumberOfParameters % Outputs each parameter sequentially
+    for iParam = 1:nParams % Outputs each parameter sequentially
         for iBit = 1:bytesize % Starts from Most Significant Bit
             if DataVector(iBit,TrialIndices(iTrial),iParam) % Outputs bits of trial to be run
                 % MAKE SURE ABOVE IS REFERENCING CORRECTLY
@@ -164,7 +164,7 @@ for iTrial = 1:NumberOfTrials
     %C Go!
     fprintf(FG, 'OUTP1 ON ');
     fprintf(FG, 'OUTP2 ON ');
-    pause(DurBeforeStim); % Do we need a pause for these to boot up?
+    pause(DurBeforeStim/1000); % Do we need a pause for these to boot up?
     
     fprintf(FG, '*TRG'); % Starts Ch2 and Ch1 at same time
     pause(Parameters(TrialIndices(iTrial),5)/1000); % Trial duration (ms)

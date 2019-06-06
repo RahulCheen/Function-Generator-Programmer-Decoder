@@ -38,12 +38,15 @@ end
 % end
 
 % header + parameters
+fprintf(FG,'OUTP1 OFF');
+fprintf(FG,'OUTP2 OFF');
+
 fprintf(FG,'DATA:VOL:CLE');
 fprintf(FG,'SOUR1:FUNC ARB'); % Change channel 1's waveform to ARB
 fprintf(FG,['SOUR1:FUNC:ARB:SRATE ',num2str(length(arbWave)*1000/pulseDuration)]);
 fprintf(FG,'SOUR1:FUNC:ARB:FILTER STEP');
 fprintf(FG,'SOUR1:FUNC:ARB:PTPEAK 2');
-fprintf(FG,'SOUR2:AM SOUR CH1');
+fprintf(FG,'SOUR2:AM:SOUR CH1');
 fprintf(FG,'SOUR2:AM:DEPT 100');
 fprintf(FG,'SOUR2:AM:DSSC ON');
 fprintf(FG,'SOUR2:AM:STAT ON');
@@ -62,8 +65,7 @@ fprintf(FG,'DATA:ARB DC0,0,0,0,0,0,0,0,0,0,0,0'); % zero volts to start
     %   3) 0 volts,             once
 SEQ_command = ['"',SEQname,'",',...
     '"DC0",         1,repeatTilTrig,maintain,4,',... % 0 volts, repeat until trigger
-    '"',ARBname,'", 1,once,         maintain,4,',... % arbitrary waveform, once
-    '"DC0",         1,once,         maintain,4'];    % 0 volts, repeat once
+    '"',ARBname,'", 1,once,         maintain,4,'];   % arb waveform, repeat once
 npoints = length(SEQ_command)-1;
 ndigits = floor(log10(length(SEQ_command)))+1;
 
@@ -75,3 +77,5 @@ fprintf(FG,['DATA:SEQ #',...
 
 fprintf(FG,['FUNC:ARB ',SEQname]); % change to sequence
 
+fprintf(FG,'OUTP1 ON');
+fprintf(FG,'OUTP2 ON');
