@@ -29,8 +29,9 @@ fprintf(FG, '*RST'); % Resets to factory default. Very quick. Sets OUTP OFF
 ARBgenerate(FG,inputs.PulseDurations,12);
 
 fprintf(FG, 'OUTP1:LOAD INF'); % Ch2 needs time to warm up.
+%fprintf(FG, 'SOUR1:APPL:SQU 7000,5 VPP,0');
 fprintf(FG, 'SOUR1:VOLT 5');
-fprintf(FG, 'SOUR1:VOLT:OFFS 2.5');
+fprintf(FG, 'SOUR1:VOLT:OFFS 0');
 fprintf(FG, 'SOUR1:FREQ 7000');
 fprintf(FG, 'SOUR1:FUNC SQU');
 fprintf(FG, 'TRIG1:SOUR BUS');
@@ -44,7 +45,7 @@ fprintf(FG, 'SOUR2:AM:SOUR CH2');
 fprintf(FG, 'OUTP2 OFF'); % turn channel 2 off for data phase
 
 pause(2); % This value is arbitrary, but should be sufficiently high (>2 seconds)
-
+chck1 = 0;
 for iTrial = 1:nTrials
     tic
     fprintf(FG,'SOUR1:FUNC SQU');
@@ -55,19 +56,24 @@ for iTrial = 1:nTrials
     fprintf(FG,'SOUR1:BURS:STAT 0');
     
     pause(inputs.Buffers.Buf/1000);
+    fprintf(FG,'OUTP1 OFF');
     
     DataByte = DataVector(iTrial,:);
+    
+    %chck1 = arbDataPhase(FG,DataByte,chck1);
     for Bit=DataByte
         if Bit
-            fprintf(FG,'SOUR1:FUNC DC');
+            fprintf(FG,'SOUR1:FUNC DC'); % DC of 1
             pause(inputs.Buffers.Bit/1000);
-            fprintf(FG,'SOUR1:FUNC SQU');
+            fprintf(FG,'SOUR1:FUNC SQU'); % back to buzz
         else
-            fprintf(FG, 'SOUR1:BURS:STAT 1');
+            fprintf(FG, 'SOUR1:BURS:STAT 1'); % turn off
             pause(inputs.Buffers.Bit/1000);
-            fprintf(FG, 'SOUR1:BURS:STAT 0');
+            fprintf(FG, 'SOUR1:BURS:STAT 0'); % turn back on
         end
     end
+% pause(inputs.Buffers.BeforeTrial/1000); % Do we need a pause for these to boot up?
+%     
     pause(inputs.Buffers.Buf/1000); % Ch2 offset is now set to zero for trial phase
         
     fprintf(FG, 'OUTP1 OFF'); % Turn this off to prevent false 1s.
@@ -82,8 +88,7 @@ for iTrial = 1:nTrials
             fprintf(FG, 'SOUR1:BURSt:STAT OFF'               ); % turn burst mode off
             fprintf(FG, 'SOUR2:AM:DSSC ON'                ); % turn DSSC on
             fprintf(FG, 'SOUR1:FUNC  ARB'                    ); % change to arbitrary waveform
-            fprintf(FG,['SOUR1:FUNC:ARB  SEQDC',num2str(pD)]); % change to pulse duration sequence
-            
+            fprintf(FG,['SOUR1:FUNC:ARB SEQDC',num2str(pD)]); % change to pulse duration sequence
             
         otherwise
             fprintf(FG, 'SOUR1:FUNC SQU'                    );  % change to square wave

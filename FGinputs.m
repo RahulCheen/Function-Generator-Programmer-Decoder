@@ -13,8 +13,8 @@ if strcmp(FG.Status,'closed')
 end
 
 inputs.TF               =  5;
-inputs.Amplitudes       = [10   200     400];
-inputs.DutyCycles       = [5    50      100];
+inputs.Amplitudes       = [10   200     400 ];
+inputs.DutyCycles       = [5    50      100 ];
 inputs.ModFreqs         = [10   100     1000];
 inputs.PulseDurations   = [50   200     1000];
 

@@ -37,7 +37,7 @@ for ii=1:length(PulseDurations)
     
     fprintf(FG,['DATA:ARB:DAC ',arbNames{ii},sprintf(',%d',arbDACs{ii})]);
     samplingrate = length(arbs{ii})*1000/PulseDurations(ii);
-    fprintf(FG,['SOUR1:FUNC:ARB:SRATE ',num2str(length(arbs{ii})*1000/PulseDurations(ii))]);
+    fprintf(FG,['SOUR1:FUNC:ARB:SRATE ',num2str(samplingrate)]);
     
     SEQ_command = ['"',seqNames{ii},'",',...
         '"DC0",              1,repeatTilTrig,maintain,4,',... % 0 volts, repeat until trigger
