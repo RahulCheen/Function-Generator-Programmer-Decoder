@@ -91,7 +91,7 @@ disp(Parameters(TrialIndices,:));
 
 %% A Establish Connection, reset system
 fprintf(FG, '*RST'); % Resets to factory default. Very quick. Sets OUTP OFF
-ARBgenerate;
+ARBgenerate(FG,PulseDurations,12);
 fprintf(FG, 'OUTP2:LOAD INF'); % Ch2 needs time to warm up.
 fprintf(FG, 'SOUR2:VOLT 5');
 fprintf(FG, 'SOUR2:VOLT:OFFS 2.5');

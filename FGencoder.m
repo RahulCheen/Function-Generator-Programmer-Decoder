@@ -31,7 +31,7 @@ ARBgenerate(FG,inputs.PulseDurations,12);
 fprintf(FG, 'OUTP1:LOAD INF'); % Ch2 needs time to warm up.
 %fprintf(FG, 'SOUR1:APPL:SQU 7000,5 VPP,0');
 fprintf(FG, 'SOUR1:VOLT 5');
-fprintf(FG, 'SOUR1:VOLT:OFFS 0');
+fprintf(FG, 'SOUR1:VOLT:OFFS 2.5');
 fprintf(FG, 'SOUR1:FREQ 7000');
 fprintf(FG, 'SOUR1:FUNC SQU');
 fprintf(FG, 'TRIG1:SOUR BUS');
@@ -45,9 +45,10 @@ fprintf(FG, 'SOUR2:AM:SOUR CH2');
 fprintf(FG, 'OUTP2 OFF'); % turn channel 2 off for data phase
 
 pause(2); % This value is arbitrary, but should be sufficiently high (>2 seconds)
-chck1 = 0;
 for iTrial = 1:nTrials
     tic
+    fprintf(FG, 'SOUR1:VOLT 5');
+    fprintf(FG, 'SOUR1:VOLT:OFFS 2.5');
     fprintf(FG,'SOUR1:FUNC SQU');
     fprintf(FG,'SOUR1:FUNC:SQU:DCYC 50');
     fprintf(FG,'SOUR1:FREQ 7000');
@@ -56,7 +57,7 @@ for iTrial = 1:nTrials
     fprintf(FG,'SOUR1:BURS:STAT 0');
     
     pause(inputs.Buffers.Buf/1000);
-    fprintf(FG,'OUTP1 OFF');
+    fprintf(FG,'OUTP1 ON');
     
     DataByte = DataVector(iTrial,:);
     
@@ -72,10 +73,10 @@ for iTrial = 1:nTrials
             fprintf(FG, 'SOUR1:BURS:STAT 0'); % turn back on
         end
     end
-% pause(inputs.Buffers.BeforeTrial/1000); % Do we need a pause for these to boot up?
-%     
+    % pause(inputs.Buffers.BeforeTrial/1000); % Do we need a pause for these to boot up?
+    %
     pause(inputs.Buffers.Buf/1000); % Ch2 offset is now set to zero for trial phase
-        
+    
     fprintf(FG, 'OUTP1 OFF'); % Turn this off to prevent false 1s.
     fprintf(FG, ['SOUR2:VOLT ' num2str(Parameters(TrialIndices(iTrial),2)/1000)]);
     
@@ -89,15 +90,18 @@ for iTrial = 1:nTrials
             fprintf(FG, 'SOUR2:AM:DSSC ON'                ); % turn DSSC on
             fprintf(FG, 'SOUR1:FUNC  ARB'                    ); % change to arbitrary waveform
             fprintf(FG,['SOUR1:FUNC:ARB SEQDC',num2str(pD)]); % change to pulse duration sequence
-            
+            fprintf(FG, 'SOUR1:VOLT 5');
+            fprintf(FG, 'SOUR1:VOLT:OFFS 0');
         otherwise
+            fprintf(FG, 'SOUR1:VOLT 5');
+            fprintf(FG, 'SOUR1:VOLT:OFFS 2.5');
             fprintf(FG, 'SOUR1:FUNC SQU'                    );  % change to square wave
             fprintf(FG, 'SOUR2:AM:DSSC OFF'                 );  % turn DSSC off
             fprintf(FG,['SOUR1:FREQ ',          num2str(MF)]);  % Modulating Frequency (Hz)
             fprintf(FG,['SOUR1:FUNC:SQU:DCYC ', num2str(DC)]);  % Duty Cycle (%)
             
             NCycles = floor(MF*pD/1000);                        % Number of cycles
-            fprintf(FG,['SOUR1:BURS:NCYC '      num2str(NCycles)]); 
+            fprintf(FG,['SOUR1:BURS:NCYC '      num2str(NCycles)]);
             fprintf(FG, 'SOUR1:BURS:STAT ON');                  % turn burst mode on
             
     end
