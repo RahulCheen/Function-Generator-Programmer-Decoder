@@ -41,13 +41,11 @@ catch
 end
 try d1(1,:) = board_dig_in_data(1,:);
 catch
-    try d1(1,:) = digital(1,:);
+    try d1(1,:) = v';
     catch
-        try d1(1,:) = v';
-        catch
-            error('Check input data for variable name.');
-        end
+        error('Check input data for variable name.');
     end
+    
 end % try to load variables of different names
 
 if ~iscolumn(d1)
@@ -114,28 +112,30 @@ while ii<length(d1) % loop through digitalData
             %% TRIAL DATA
             %% Trial Event markers
             trial_remove = 100;
+            trialStart   = endBuzz  (1)+trial_remove;
+            trialEnd     = startBuzz(2)-trial_remove;
             
-            try trialstream = d1(endBuzz(1)+trial_remove:startBuzz(2)-trial_remove); % trial stream, remove 100 points from either end
+            try trialstream = d1(trialStart:trialEnd); % trial stream, remove 100 points from either end
             catch
-                trialstream = d1(endBuzz(1)+trial_remove:end);
+                trialstream = d1(trialStart:end);
             end
             
-            trials(iTrial).trialStart       = endBuzz  (1)+trial_remove;  % start of trial phase
-            trials(iTrial).trialEnd         = startBuzz(2)-trial_remove;  % end of trial phase
+            trials(iTrial).trialStart       = trialStart;  % start of trial phase
+            trials(iTrial).trialEnd         = trialEnd  ;  % end of trial phase
             trials(iTrial).trialEnv     	= trialstream;   % entire trial phase
             
             %% Stimulation Events markers
-            stimStart   = find(trialstream,1,'first') - 1;
-            stimEnd     = find(trialstream,1,'last' ) + 1;
+            stimStart   = find(trialstream,1,'first'); % referenced to start of trial
+            stimEnd     = find(trialstream,1,'last' ); % referenced to start of trial
             
-            try d1(stimStart + endBuzz(1));     % check if this value is within the digital signal
-                d1(stimEnd   + endBuzz(1));
+            try d1(stimStart + trialStart);     % check if this value is within the digital signal
+                d1(stimEnd   + trialStart);
                 
                 % stimulation markers
-                trials(iTrial).stimStart   	= stimStart + endBuzz(1); % start of stimulation
-                trials(iTrial).stimEnd     	= stimEnd   + endBuzz(1); % end of stimulation
+                trials(iTrial).stimStart   	= stimStart + trialStart ; % referenced to start of session
+                trials(iTrial).stimEnd     	= stimEnd   + trialStart ; % referenced to start of session
                 trials(iTrial).stimEnv      = trialstream(stimStart:stimEnd); 
-                trials(iTrial).stimDur      = trials(iTrial).stimStart./fs;
+                trials(iTrial).stimDur      = 1000*(trials(iTrial).stimEnd - trials(iTrial).stimStart)./fs;
                 
             catch % replace with empty values if an error occurred in finding stim onset/offset
                 trials(iTrial).stimStart  	= []; % start of stimulation
@@ -161,6 +161,8 @@ while ii<length(d1) % loop through digitalData
                 trials(iTrial).pulseDuration     = [];
             
             end
+            
+            fullTrials{iTrial,1} = d1(trials(iTrial).bitData(1).bitStart:trials(iTrial).trialEnd);
             iBit = 0; % reset bit counter
             iTrial = iTrial + 1; % increment trial counter
     end
@@ -192,10 +194,12 @@ disp(['Number of Unique Trials: ',num2str(length(unique(ParameterOrderDecoded,'r
 assignin('base','trials',               eval('trials'));
 assignin('base','fs',                   eval('fs'));
 assignin('base','ParameterOrderDecoded',eval('ParameterOrderDecoded'));
-
+assignin('base','fullTrials',           eval('fullTrials'));
 
 end
 
+
+%% ~~~~~~~~~~ ACCESSORY FUNCTIONS ~~~~~~~~~~~
 % ~~~~~~~~~~~~~~~~~~~~~~~~~ FindBuzz ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function [buzzStart,buzzEnd,new_ii] = findBuzz(d1,startindex)
 % FINDBUZZ finds the next buzz in the digital channel.  Inputs are the full digital channel data, and the

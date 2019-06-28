@@ -18,11 +18,15 @@ inputs.DutyCycles       = [5    50      100 ];
 inputs.ModFreqs         = [10   100     1000];
 inputs.PulseDurations   = [50   200     1000];
 
-inputs.bytesize           = 10;     % number of bytes
+inputs.bytesize         = 10;     % number of bytes
 
-inputs.Buffers.Bit         = 5;     % [ms]
-inputs.Buffers.Buf         = 1;     % [ms]
-inputs.Buffers.InterTrial  = 5000;  % [ms]
-inputs.Buffers.BeforeTrial = 500;   % [ms]
+inputs.BitBuffer         = 5;     % [ms]
+inputs.Buffer            = 1;     % [ms]
+inputs.InterTrialBuffer  = 5000;  % [ms]
+inputs.BeforeTrialBuffer = 500;   % [ms]
 
 inputs.DCType = 'Arb'; % type of waveform to use (other option: BUR)
+
+
+
+s = serial('COM4','BaudRate',9600);

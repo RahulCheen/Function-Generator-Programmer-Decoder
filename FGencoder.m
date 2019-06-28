@@ -1,6 +1,16 @@
-function FGencoder(FG,inputs)
-clearvars -except FG inputs
+function FGencoder(FG,inputs,s)
+clearvars -except FG inputs s
 
+if ~exist('s','var')
+    try s = serial('COM4');
+        fclose(s);
+        fopen(s); fclose(s);
+        arduinoFlag = 1;
+    catch
+        s = '';
+        arduinoFlag = 0;
+    end
+end
 Parameters = allcomb(...
     inputs.TF,...
     inputs.Amplitudes,...
@@ -45,6 +55,9 @@ fprintf(FG, 'SOUR2:AM:SOUR CH2');
 fprintf(FG, 'OUTP2 OFF'); % turn channel 2 off for data phase
 
 pause(2); % This value is arbitrary, but should be sufficiently high (>2 seconds)
+
+
+
 for iTrial = 1:nTrials
     tic
     fprintf(FG, 'SOUR1:VOLT 5');
@@ -56,7 +69,7 @@ for iTrial = 1:nTrials
     
     fprintf(FG,'SOUR1:BURS:STAT 0');
     
-    pause(inputs.Buffers.Buf/1000);
+    pause(inputs.Buffer/1000);
     fprintf(FG,'OUTP1 ON');
     
     DataByte = DataVector(iTrial,:);
@@ -65,24 +78,24 @@ for iTrial = 1:nTrials
     for Bit=DataByte
         if Bit
             fprintf(FG,'SOUR1:FUNC DC'); % DC of 1
-            pause(inputs.Buffers.Bit/1000);
+            pause(inputs.BitBuffer/1000);
             fprintf(FG,'SOUR1:FUNC SQU'); % back to buzz
         else
             fprintf(FG, 'SOUR1:BURS:STAT 1'); % turn off
-            pause(inputs.Buffers.Bit/1000);
+            pause(inputs.BitBuffer/1000);
             fprintf(FG, 'SOUR1:BURS:STAT 0'); % turn back on
         end
     end
     % pause(inputs.Buffers.BeforeTrial/1000); % Do we need a pause for these to boot up?
     %
-    pause(inputs.Buffers.Buf/1000); % Ch2 offset is now set to zero for trial phase
+    pause(inputs.Buffer/1000); % Ch2 offset is now set to zero for trial phase
     
     fprintf(FG, 'OUTP1 OFF'); % Turn this off to prevent false 1s.
-    fprintf(FG, ['SOUR2:VOLT ' num2str(Parameters(TrialIndices(iTrial),2)/1000)]);
+    fprintf(FG, ['SOUR2:VOLT ' num2str(Parameters(iTrial,2)/1000)]);
     
     DC = Parameters(iTrial,3);
-    pD = Parameters(iTrial,5);
     MF = Parameters(iTrial,4);
+    pD = Parameters(iTrial,5);
     
     switch DC
         case 100
@@ -90,7 +103,7 @@ for iTrial = 1:nTrials
             fprintf(FG, 'SOUR2:AM:DSSC ON'                ); % turn DSSC on
             fprintf(FG, 'SOUR1:FUNC  ARB'                    ); % change to arbitrary waveform
             fprintf(FG,['SOUR1:FUNC:ARB SEQDC',num2str(pD)]); % change to pulse duration sequence
-            fprintf(FG, 'SOUR1:VOLT 5');
+            fprintf(FG, 'SOUR1:VOLT 3');
             fprintf(FG, 'SOUR1:VOLT:OFFS 0');
         otherwise
             fprintf(FG, 'SOUR1:VOLT 5');
@@ -108,14 +121,19 @@ for iTrial = 1:nTrials
     
     fprintf(FG, 'OUTP1 ON ');
     fprintf(FG, 'OUTP2 ON ');
-    pause(inputs.Buffers.BeforeTrial/1000); % Do we need a pause for these to boot up?
+    pause(inputs.BeforeTrialBuffer/1000); % Do we need a pause for these to boot up?
     
     fprintf(FG, '*TRG'); % Starts Ch2 and Ch1 at same time
     pause(pD*2/1000);
     fprintf(FG,'OUTP1 OFF');
     fprintf(FG,'OUTP2 OFF');
     
-    pause(inputs.Buffers.InterTrial/1000 - toc);
+    if arduinoFlag
+        fopen(s);
+        fwrite(s,1000);
+        fclose(s);
+    end
+    pause(inputs.InterTrialBuffer/1000 - toc);
 end
 
 
