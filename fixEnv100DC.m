@@ -24,15 +24,20 @@ for ii=1:nTrials
         trialsCorrected(ii).stimStart    = trialsCorrected(ii).stimStart - correction_pts;
         trialsCorrected(ii).stimEnd      = trialsCorrected(ii).stimEnd   + correction_pts;
         trialsCorrected(ii).stimDur      = 1000*(trialsCorrected(ii).stimEnd - trialsCorrected(ii).stimStart)./fs;
-        trialsCorrected(ii).isArb        = true;
-        trialsCorrected(ii).digCorrected = true;
+        isArb          (ii)         	 = true;
+        digCorrected   (ii)         	 = true;
     else
         trialsCorrected(ii)              = trials(ii);
-        trialsCorrected(ii).isArb        = false;
-        trialsCorrected(ii).digCorrected = false;
+        isArb          (ii)          	 = false;
+        digCorrected   (ii)            	 = false;
     end    
     
 end
+isArb           = num2cell(isArb);
+digCorrected    = num2cell(digCorrected);
+[trialsCorrected(:).isArb]          = isArb{:};
+[trialsCorrected(:).digCorrected]   = digCorrected{:};
+
 save(trialsName,'-append','trialsCorrected');
 assignin('base','trialsCorrected',  eval('trialsCorrected'));
 assignin('base','trials',           eval('trials'));
