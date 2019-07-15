@@ -22,7 +22,7 @@ trial_order     = 'random'; % = 'in order';
 FG_ID           = 'MY52600694'; % serial number of new fxn generator
 %FG_ID           = 'MY52600670'; % serial number of old fxn generator
 
-ARD_ID          = 'COM5';       % arduino port connection
+ARD_ID          = 'COM7';       % arduino port connection
 
 % For handling data cycles
 DurBit = 5;     % bit duration approx 2 ms longer   [ms] 
@@ -49,8 +49,8 @@ else
     warning('Trial order is not randomized.  Consider changing value of trial_order to ''random''.');
 end
 
-%B Binarize parameters all at once, no special buffers needed:
-DataVector = zeros(bytesize, nTrials, nParams);
+% Convert base-10 to binary
+DataVector = zeros(nTrials, bytesize*nParams);
 for ii = 1:nTrials
     DataVector(ii,:) = binarize(Parameters(ii,:),bytesize);
 end
@@ -69,6 +69,7 @@ end
 try delete(s); catch; end
 
 try s = serial(ARD_ID);
+    fopen(s);   % open connection to arduino (triggers solenoid)
     ArduinoFlag = 1;    % arduino detected
 catch
     warning(['No Arduino Detected at the specified port (',ARD_ID,')']);
@@ -181,8 +182,9 @@ for iTrial = 1:nTrials
     if ArduinoFlag
         fclose(FG); % close function generator connection
         
-        fopen(s);   % open connection to arduino (triggers solenoid)
+        fwrite(s,1); % write anything to arduino to turn solenoid on
         fclose(s);  % close connection to arduino (close it immediately to ensure no accidental triggers)
+        fopen(s);   %
         
         fopen(FG);  % open function generator connection
     end

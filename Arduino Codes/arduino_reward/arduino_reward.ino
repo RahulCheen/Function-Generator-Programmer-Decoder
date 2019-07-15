@@ -3,7 +3,7 @@ const int MANUAL    = 23;     // manual reward button pin
 const int SOLENOID  = 53;     // output to solenoid transistor switch
 const int TOGGLE    = 37;     // Toggle between manual and automatic states
 
-const int rewardDuration  = 100;    // duration of reward, length of time solenoid is on
+const int rewardDuration  = 500;    // duration of reward, length of time solenoid is on
 const int rewardPost      = 1000;   // time to pause after reward, so that no reward is given
 
 volatile int buttonOn = LOW;
