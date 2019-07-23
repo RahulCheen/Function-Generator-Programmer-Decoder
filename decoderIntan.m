@@ -33,7 +33,7 @@ end
 addpath(cd);
 addpath(pwd);
 
-[dataName,trialsName,~,rawDataName] = MatNames;
+[dataName,trialsName,~,rawDataName] = MatNames(cd);
 
 try load(dataName,'*dig*','*adc*','ana*','freq*','v*'); % load in all variables with these
 catch

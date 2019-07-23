@@ -11,7 +11,7 @@ if ~exist('correction','var')
 elseif isempty(correction)
     correction = 4.66666666667;
 end
-[~,trialsName,~,~] = MatNames;
+[~,trialsName,~,~] = MatNames(cd);
 
 load(trialsName,'trials','fs');
 

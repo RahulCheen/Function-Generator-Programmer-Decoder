@@ -9,13 +9,14 @@ clearvars -except Parameters FG s;
 % Inter-trial duration saturation occurs at 3 times the greatest trial duration.
 inter_trial     = 5000;     % time between stimulations [ms]
 bytesize        = 16;       % number of bits to write for each parameter(keep at 16 for parameter values of <= 65000)
+nRepetitions    = 5;        % number of times to repeat each permutation (randomization occurs AFTER repetition)
 
 % Import a parameter set list, OR populate a parameter set list
-TF              =  5                     ;  % TRANSDUCER FREQUENCY (must be a single value) [kHz]
-Amplitudes      = [25   100     400    	];  % voltages to achieve 0.1, 2, and 40 W/cm^2     [mV]
-DutyCycles      = [5    50      100     ];	% duty cycles                                   [%]
-PRFs            = [10   100     1000    ];	% pulse repetition frequencies                  [Hz]
-PulseDurations  = [50   200     1000   	];  % pulse durations                               [ms]
+TF              =  5                             ;  % TRANSDUCER FREQUENCY (must be a single value) [kHz]
+Amplitudes      = [25   200     400             ];  % voltages to achieve 0.1, 2, and 40 W/cm^2     [mV]
+DutyCycles      = [10   50      100             ];	% duty cycles                                   [%]
+PRFs            = [0    10      100     1000    ];	% pulse repetition frequencies                  [Hz]
+PulseDurations  = [50   200     1000            ];  % pulse durations                               [ms]
 
 trial_order     = 'random'; % = 'in order';
 FG_ID           = 'MY52600694'; % serial number of new fxn generator
@@ -32,6 +33,9 @@ DurBeforeStim = 500; % pause between data phase and trial phase [ms]
 %% GENERATING PARAMETER LIST & BINARY DATA
 Parameters           = allcomb(TF,Amplitudes,DutyCycles,PRFs,PulseDurations); % all possible trial combinations
 [Parameters,NCycles] = RemoveParameterErrors(Parameters); % remove bad parameter combinations
+
+Parameters = repmat(Parameters,nRepetitions,1);           % repeat all trials
+
 bytesize = max([nextpow2(max(max(Parameters))),bytesize]); % take maximum of needed bytesize and user-input bytesize
 
 nTrials      = size(Parameters,1); % number of trials
@@ -70,7 +74,7 @@ try s = serial(ARD_ID);
     fopen(s);   % open connection to arduino (triggers solenoid)
     ArduinoFlag = 1;    % arduino detected
 catch
-    warning(['No Arduino Detected at the specified port (',ARD_ID,')']);
+    warning(['No Arduino detected at the specified port (',ARD_ID,').']);
     ArduinoFlag = 0;    % no arduino
 end
 
