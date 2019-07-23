@@ -9,7 +9,6 @@ clearvars -except Parameters FG;
 inter_trial     = 5000;     % time between stimulations [ms]
 bytesize        = 16;       % number of bits to write for each parameter(keep at 16 for parameter values of <= 65000)
 
-
 % Import a parameter set list, OR populate a parameter set list
 TF              =  5                     ;  % TRANSDUCER FREQUENCY (must be a single value) [kHz]
 Amplitudes      = [25   100     400    	];  % voltages to achieve 0.1, 2, and 40 W/cm^2     [mV]
@@ -54,7 +53,7 @@ else
 end
 
 %B Binarize parameters all at once, no special buffers needed:
-DataVector = zeros(bytesize, nTrials, nParams);
+DataVector = zeros(nTrials, bytesize*nParams);
 for ii = 1:nTrials
     DataVector(ii,:) = binarize(Parameters(ii,:),bytesize);
 end

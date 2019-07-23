@@ -10,7 +10,6 @@ clearvars -except Parameters FG s;
 inter_trial     = 5000;     % time between stimulations [ms]
 bytesize        = 16;       % number of bits to write for each parameter(keep at 16 for parameter values of <= 65000)
 
-
 % Import a parameter set list, OR populate a parameter set list
 TF              =  5                     ;  % TRANSDUCER FREQUENCY (must be a single value) [kHz]
 Amplitudes      = [25   100     400    	];  % voltages to achieve 0.1, 2, and 40 W/cm^2     [mV]
@@ -28,7 +27,6 @@ ARD_ID          = 'COM7';       % arduino port connection
 DurBit = 5;     % bit duration approx 2 ms longer   [ms] 
 DurBuf = 1;     % square wave buffer duration       [ms]
 
-% For pauses and timing post-processing
 DurBeforeStim = 500; % pause between data phase and trial phase [ms]
 
 %% GENERATING PARAMETER LIST & BINARY DATA
