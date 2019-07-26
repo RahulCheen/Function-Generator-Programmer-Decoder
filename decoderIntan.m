@@ -37,8 +37,11 @@ addpath(pwd);
 
 try load(dataName,'*dig*','*adc*','ana*','freq*','v*'); % load in all variables with these
 catch
-    error('Must run conversion scripts: convert_rhs.m or convert_dat.m');
-end
+    try load(rawDataName,'*dig*','freq*','v*');
+    catch
+        error('Must run conversion scripts: convert_rhs.m or convert_dat.m');
+    end
+    
 try d1(1,:) = board_dig_in_data(1,:);   % load from .rhs file
 catch
     try d1(1,:) = digital_data';        % load from .dat file

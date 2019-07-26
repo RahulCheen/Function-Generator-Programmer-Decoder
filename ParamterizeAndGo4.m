@@ -12,11 +12,13 @@ bytesize        = 16;       % number of bits to write for each parameter(keep at
 nRepetitions    = 5;        % number of times to repeat each permutation (randomization occurs AFTER repetition)
 
 % Import a parameter set list, OR populate a parameter set list
-TF              =  5                             ;  % TRANSDUCER FREQUENCY (must be a single value) [kHz]
-Amplitudes      = [25   200     400             ];  % voltages to achieve 0.1, 2, and 40 W/cm^2     [mV]
-DutyCycles      = [10   50      100             ];	% duty cycles                                   [%]
-PRFs            = [0    10      100     1000    ];	% pulse repetition frequencies                  [Hz]
-PulseDurations  = [50   200     1000            ];  % pulse durations                               [ms]
+TF              =  500                           ;  % TRANSDUCER FREQUENCY (must be a single value) [kHz]
+Amplitudes      = [50 200             ];            % voltages to achieve 1, and 10 W/cm^2     [mV]
+%TF              = 1000                           ;  % TRANSDUCER FREQUENCY (must be a single value) [kHz]
+%Amplitudes      = [16 50             ];            % voltages to achieve 1, and 10 W/cm^2     [mV]
+DutyCycles      = [50      100];                	% duty cycles                                   [%]
+PRFs            = [0 500];                          % pulse repetition frequencies                  [Hz]
+PulseDurations  = [100     1000            ];       % pulse durations                               [ms]
 
 trial_order     = 'random'; % = 'in order';
 FG_ID           = 'MY52600694'; % serial number of new fxn generator
@@ -108,6 +110,9 @@ pause(2); % one-time pause to allow any buffered SCPI code to be executed by the
 for iTrial = 1:nTrials
     tic; % start counter for each trial
     
+    % display info on trial type
+    display(sprintf('Trial %d: CF = %d kHz, Amp = %d mV, dur = %d ms, PRF = %d Hz, duty = %d%c', iTrial, Parameters(iTrial,1), Parameters(iTrial,2), Parameters(iTrial,5), Parameters(iTrial,4), Parameters(iTrial,3), '%')); %#ok<*DSPS>
+    
     % re-initialize channel 1 to buffer bursting
     fprintf(FG, 'SOUR1:VOLT 5');            % 5V peak-to-peak
     fprintf(FG, 'SOUR1:VOLT:OFFS 2.5');     % 2.5V offset (0-5V)
@@ -144,7 +149,7 @@ for iTrial = 1:nTrials
     
     DC = Parameters(iTrial,3); % current trial's duty cycle
     MF = Parameters(iTrial,4); % current trial's modulating freqeuncy
-    pD = Parameters(iTrial,5); % current trial's pulse duration
+    pD = Parameters(iTrial,5); % current trial's pulse duration             
     
     % INITIALIZE WAVEFORM IN FUNCTION GENERATOR
     switch DC % change behavior based on duty cycle
