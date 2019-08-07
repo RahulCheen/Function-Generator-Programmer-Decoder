@@ -8,7 +8,7 @@ clearvars -except Parameters FG s;
 %% PARAMETERS
 % Inter-trial duration saturation occurs at 3 times the greatest trial duration.
 inter_trial     = 5000;     % time between stimulations [ms]
-bytesize        = 16;       % number of bits to write for each parameter(keep at 16 for parameter values of <= 65000)
+bytesize        = 10;       % number of bits to write for each parameter(keep at 16 for parameter values of <= 65000)
 nRepetitions    = 5;        % number of times to repeat each permutation (randomization occurs AFTER repetition)
 
 % Import a parameter set list, OR populate a parameter set list
@@ -32,6 +32,8 @@ DurBuf = 1;     % square wave buffer duration       [ms]
 
 DurBeforeStim = 500; % pause between data phase and trial phase [ms]
 
+% Bit information speed:
+BitInfoSpeed = 30;  % [Hz]
 %% GENERATING PARAMETER LIST & BINARY DATA
 Parameters           = allcomb(TF,Amplitudes,DutyCycles,PRFs,PulseDurations); % all possible trial combinations
 [Parameters,NCycles] = RemoveParameterErrors(Parameters); % remove bad parameter combinations
@@ -47,9 +49,7 @@ nParams      = size(Parameters,2); % number of parameters
 if strcmp(trial_order,'random')
     rng('shuffle');
     Parameters = Parameters(randperm(nTrials),:);    % reorder parameter list
-    disp(num2str(Parameters));
 else
-    disp(num2str(Parameters));
     warning('Trial order is not randomized.  Consider changing value of trial_order to ''random''.');
 end
 
@@ -113,36 +113,21 @@ for iTrial = 1:nTrials
     % display info on trial type
     display(sprintf('Trial %d: CF = %d kHz, Amp = %d mV, dur = %d ms, PRF = %d Hz, duty = %d%c', iTrial, Parameters(iTrial,1), Parameters(iTrial,2), Parameters(iTrial,5), Parameters(iTrial,4), Parameters(iTrial,3), '%')); %#ok<*DSPS>
     
-    % re-initialize channel 1 to buffer bursting
-    fprintf(FG, 'SOUR1:VOLT 5');            % 5V peak-to-peak
-    fprintf(FG, 'SOUR1:VOLT:OFFS 2.5');     % 2.5V offset (0-5V)
-    fprintf(FG, 'SOUR1:FUNC SQU');          % turn to sq. wave
-    fprintf(FG, 'SOUR1:FUNC:SQU:DCYC 50');  % duty cycle of sq. wave is 50%
-    fprintf(FG, 'SOUR1:FREQ 7000');         % 7000Hz oscillating frequency
-    fprintf(FG, 'OUTP1 ON');                % turn on
+    fprintf(FG, 'OUTP1 OFF');
+    fprintf(FG, 'OUTP2 OFF');
     
-    fprintf(FG, 'SOUR1:BURS:STAT 0');       % turn burst on
-    
-    pause(DurBuf/1000);                     % pause for buffer duration
-    fprintf(FG,'OUTP1 ON');                 % turn on
-    
+
     % write binary data
+    tic;
     DataByte = DataVector(iTrial,:); % current trial's parameter information
-    for Bit=DataByte
-        if Bit
-            fprintf(FG,'SOUR1:FUNC DC'); % DC of 1
-            pause(DurBit/1000);
-            fprintf(FG,'SOUR1:FUNC SQU'); % back to buzz
-        else
-            fprintf(FG, 'SOUR1:BURS:STAT 1'); % turn off
-            pause(DurBit/1000);
-            fprintf(FG, 'SOUR1:BURS:STAT 0'); % turn back on
-        end
-    end
+    fprintf(FG,'SOUR1:BURS:STAT OFF');
+    noOscillationARBgenerate(FG,DataByte);
     
     pause(DurBuf/1000); % Ch2 offset is now set to zero for trial phase
-     
-    fprintf(FG, 'OUTP1 OFF'); % Turn this off to prevent false 1s.
+    t1 = toc;
+    
+    
+    fprintf(FG, 'OUTP1 OFF');
     
     % WRITE ACTUAL WAVEFORM
     fprintf(FG, ['SOUR2:VOLT ' num2str(Parameters(iTrial,2)/1000)]);
@@ -157,14 +142,14 @@ for iTrial = 1:nTrials
             fprintf(FG, 'SOUR1:BURSt:STAT OFF'               ); % turn burst mode off
             fprintf(FG, 'SOUR2:AM:DSSC ON'                   ); % turn DSSC on
             
-            fprintf(FG, 'SOUR1:FUNC  ARB'                    ); % change to arbitrary waveform
-            fprintf(FG,['SOUR1:FUNC:ARB SEQDC',num2str(pD)]  ); % change to sequence for current pulse duration
+            fprintf(FG,['MMEM:LOAD:DATA "INT:\seqDC',num2str(pD),'.seq"']);
+            fprintf(FG, 'SOUR1:FUNC ARB'                        ); % change to arbitrary waveform
+            fprintf(FG,['SOUR1:FUNC:ARB "INT:\seqDC',num2str(pD),'.seq"']); % change to sequence for current pulse duration
             fprintf(FG, 'SOUR1:VOLT 5');                        % voltage at 3 V (does not work with 5 V)
             fprintf(FG, 'SOUR1:VOLT:OFFS 0');                   % offset to 0 V
-            
+            fprintf(FG, 'SOUR1:FUNC:ARB:SRATE 50000');
+    
         otherwise % not 100% duty cycle (burst mode)
-            fprintf(FG, 'SOUR1:VOLT 5');                        % voltage at 5 V (does not work at 3 V)
-            fprintf(FG, 'SOUR1:VOLT:OFFS 2.5');                 % offset to 2.5 V
             fprintf(FG, 'SOUR1:FUNC SQU'                    );  % change to square wave
             fprintf(FG, 'SOUR2:AM:DSSC OFF'                 );  % turn DSSC off
             fprintf(FG,['SOUR1:FREQ ',          num2str(MF)]);  % Modulating Frequency (Hz)
@@ -173,6 +158,8 @@ for iTrial = 1:nTrials
             NCycles = floor(MF*pD/1000);                        % Number of cycles
             fprintf(FG,['SOUR1:BURS:NCYC '      num2str(NCycles)]);
             fprintf(FG, 'SOUR1:BURS:STAT ON');                  % turn burst mode on
+            fprintf(FG, 'SOUR1:VOLT 5');                        % voltage at 5 V (does not work at 3 V)
+            fprintf(FG, 'SOUR1:VOLT:OFFS 2.5');                 % offset to 2.5 V
             
     end
     
@@ -182,7 +169,7 @@ for iTrial = 1:nTrials
     pause(DurBeforeStim/1000);
     
     fprintf(FG, '*TRG'); % Starts Ch2 and Ch1 at same time
-    pause(pD*2/1000); % pause sufficiently to allow the full waveform to occur
+    pause(pD*1.25/1000); % pause sufficiently to allow the full waveform to occur
     fprintf(FG,'OUTP1 OFF');
     fprintf(FG,'OUTP2 OFF');
     
@@ -195,7 +182,11 @@ for iTrial = 1:nTrials
         
         fopen(FG);  % open function generator connection
     end
+    
     pause(inter_trial/1000 - toc); % pause for remaining amount of time
+    t2 = toc;
+    disp(num2str([t1 t2]));
+
 end
 
 

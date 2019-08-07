@@ -31,7 +31,14 @@ fprintf(FG,'DATA:VOL:CLE');
 fprintf(FG,'SOUR1:FUNC ARB'); % Change channel 1's waveform to ARB
 fprintf(FG,'SOUR1:FUNC:ARB:FILTER STEP');
 
-fprintf(FG,'DATA:ARB DC0,0,0,0,0,0,0,0,0,0,0,0'); % zero volts to start
+DC0Name         = 'DC0';
+DC0             =  zeros(8,1);
+
+fprintf(FG,['DATA:ARB:DAC ',DC0Name,sprintf( ',%d',round( DC0* (2^15-1) ) )] );
+
+
+samplingrate = length(DC0) / (1/30);
+
 
 for ii=1:length(PulseDurations)
     
@@ -50,8 +57,6 @@ for ii=1:length(PulseDurations)
         num2str(ndigits),... % number of digits in block
         num2str(npoints),... % number of points in block
         SEQ_command]);       % actual sequence order
-    
-    fprintf(FG,['FUNC:ARB ',arbNames{ii}]); % change to sequence
-%     fprintf(FG,['MMEM:STORE:DATA "INT:\',arbNames{ii},'"']);
-%     fprintf(FG,['MMEM:STORE:DATA "INT:\',seqNames{ii},'"']);
+    fprintf(FG,['FUNC:ARB ',seqNames{ii}]);
+    fprintf(FG,['MMEM:STORE:DATA "INT:\',seqNames{ii},'.seq"']);
 end

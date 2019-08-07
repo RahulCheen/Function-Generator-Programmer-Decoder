@@ -46,5 +46,5 @@ end
 if iscolumn(y)
     arbWave = [y;    ones(sizeArb-2*n,  1);             y_l];
 else
-    arbWave = [y,    ones(1,             sizeArb-2*n),  y_l];
+    arbWave = [y,    ones(1,            sizeArb-2*n),   y_l];
 end
