@@ -33,7 +33,7 @@ end
 addpath(cd);
 addpath(pwd);
 
-[dataName,trialsName,~,rawDataName] = MatNames(cd);
+[dataName,trialsName,~,rawDataName] = MatNames;
 
 try load(dataName,'*dig*','*adc*','ana*','freq*','v*'); % load in all variables with these
 catch
@@ -41,12 +41,15 @@ catch
     catch
         error('Must run conversion scripts: convert_rhs.m or convert_dat.m');
     end
-    
+end
 try d1(1,:) = board_dig_in_data(1,:);   % load from .rhs file
 catch
     try d1(1,:) = digital_data';        % load from .dat file
     catch
-        error('Check input data for variable name.');
+        try d1(1,:) = v';
+        catch
+            error('Check input data for variable name.');
+        end
     end
     
 end % try to load variables of different names

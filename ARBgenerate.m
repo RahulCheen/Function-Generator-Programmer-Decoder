@@ -16,7 +16,7 @@ catch
 end
 
 for ii=1:length(PulseDurations)
-    arbs{ii} = DCWithRiseAndFall(PulseDurations(ii)*50,RiseDur,PulseDurations(ii),'cosine');
+    arbs{ii} = DCWithRiseAndFall(PulseDurations(ii)*25,RiseDur,PulseDurations(ii),'cosine');
     arbDACs{ii} = round(arbs{ii}*(2^15 - 1));                 % change to DAC values, signed, 16-bit
     arbNames{ii} = ['arbDC',num2str(PulseDurations(ii))];
     seqNames{ii} = ['seqDC',num2str(PulseDurations(ii))];

@@ -2,7 +2,7 @@ clear;
 tBefore = 1; % [seconds]
 tAfter  = 1; % [seconds]
 
-[~,trialsName,AmpName,AnalogName,RawDataName] = MatNames('D:\rat\Test\');
+[~,trialsName,AmpName,AnalogName,RawDataName] = MatNames;
 
 vars = who('-file',trialsName);
 
@@ -43,16 +43,18 @@ for ii=1:length(trials)
         ampName = allAmpNames{jj};
         
         m = matfile(ampName);
-        eval(['trials(ii).ampData(jj).beforeStim = [trials(ii).ampData(jj).beforeStim,m.amp',num2str(jj),'((stimStart-tBefore*fs):stimStart,1)];']);
+        eval(['trials(ii).ampData.beforeStim = [trials(ii).ampData.beforeStim,m.amp',num2str(jj),'((stimStart-tBefore*fs): stimStart           ,1)];']);
+        eval(['trials(ii).ampData.duringStim = [trials(ii).ampData.duringStim,m.amp',num2str(jj),'( stimStart            : stimEnd             ,1)];']);
+        eval(['trials(ii).ampData.afterStim  = [trials(ii).ampData.afterStim, m.amp',num2str(jj),'( stimEnd              :(stimEnd + tAfter*fs),1)];']);
         
-        eval(['trials(ii).ampData(jj).beforeStim = ',...
-            'm.amp',num2str(jj),'((stimStart-',num2str(tBefore*fs),') : stimStart                        , 1);']);
-        
-        eval(['trials(ii).ampData(jj).duringStim = ',...
-            'm.amp',num2str(jj),'( stimStart                          : stimEnd                          , 1);']);
-        
-        eval(['trials(ii).ampData(jj).afterStim  = ',...
-            'm.amp',num2str(jj),'( stimEnd                            :(stimEnd + ',num2str(tAfter*fs),'), 1);']);
+%         eval(['trials(ii).ampData(jj).beforeStim = ',...
+%             'm.amp',num2str(jj),'((stimStart-',num2str(tBefore*fs),') : stimStart                        , 1);']);
+%         
+%         eval(['trials(ii).ampData(jj).duringStim = ',...
+%             'm.amp',num2str(jj),'( stimStart                          : stimEnd                          , 1);']);
+%         
+%         eval(['trials(ii).ampData(jj).afterStim  = ',...
+%             'm.amp',num2str(jj),'( stimEnd                            :(stimEnd + ',num2str(tAfter*fs),'), 1);']);
         
     end
     

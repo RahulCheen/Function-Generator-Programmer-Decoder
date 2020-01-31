@@ -1,7 +1,7 @@
 % ParameterizeAndGo4
 %   Includes Arbitrary Waveforms for 100% DC signals
 %   Arduino Connected
-
+%   Flag for 50% duty cycle sine-wave modulation (rather than square wave modulation)
 
 clearvars -except Parameters FG s;
 
@@ -11,18 +11,19 @@ inter_trial     = 5000;     % time between stimulations [ms]
 bytesize        = 16;       % number of bits to write for each parameter(keep at 16 for parameter values of <= 65000)
 nRepetitions    = 5;        % number of times to repeat each permutation (randomization occurs AFTER repetition)
 
+sineWaveModFlag = 1;
 % Import a parameter set list, OR populate a parameter set list
 TF              =  500                           ;  % TRANSDUCER FREQUENCY (must be a single value) [kHz]
-Amplitudes      = [50 200             ];            % voltages to achieve 1, and 10 W/cm^2     [mV]
+Amplitudes      = [ 200  400           ];            % voltages to achieve 1, and 10 W/cm^2     [mV]
 %TF              = 1000                           ;  % TRANSDUCER FREQUENCY (must be a single value) [kHz]
 %Amplitudes      = [16 50             ];            % voltages to achieve 1, and 10 W/cm^2     [mV]
-DutyCycles      = [50      100];                	% duty cycles                                   [%]
-PRFs            = [0 500];                          % pulse repetition frequencies                  [Hz]
-PulseDurations  = [100     1000            ];       % pulse durations                               [ms]
+DutyCycles      = [50 25      ];                	% duty cycles                                   [%]
+PRFs            = [5];                          % pulse repetition frequencies                  [Hz]
+PulseDurations  = [  2000   1000            ];       % pulse durations                               [ms]
 
 trial_order     = 'random'; % = 'in order';
-FG_ID           = 'MY52600694'; % serial number of new fxn generator
-%FG_ID           = 'MY52600670'; % serial number of old fxn generator
+%FG_ID           = 'MY52600694'; % serial number of new fxn generator
+FG_ID           = 'MY52600670'; % serial number of old fxn generator
 
 ARD_ID          = 'COM7';       % arduino port connection
 
@@ -151,6 +152,18 @@ for iTrial = 1:nTrials
     MF = Parameters(iTrial,4); % current trial's modulating freqeuncy
     pD = Parameters(iTrial,5); % current trial's pulse duration             
     
+    if sineWaveModFlag && DC==50
+        fprintf(FG, 'SOUR1:BURSt:STAT ON'              );
+            fprintf(FG, 'SOUR1:VOLT 5');
+            fprintf(FG, 'SOUR1:FUNC SIN');
+            fprintf(FG,['SOUR1:FREQ ', num2str(MF)]);
+            fprintf(FG, 'SOUR2:AM:DSSC OFF');
+            fprintf(FG, 'SOUR1:BURSt:PHASe 270');
+            
+            NCycles = floor(MF*pD/1000);                        % Number of cycles
+            fprintf(FG,['SOUR1:BURS:NCYC '      num2str(NCycles)]);
+            fprintf(FG, 'SOUR1:BURS:STAT ON');                  % turn burst mode on
+    else
     % INITIALIZE WAVEFORM IN FUNCTION GENERATOR
     switch DC % change behavior based on duty cycle
         case 100 % 100% duty cycle (arbitrary waveform)
@@ -161,7 +174,7 @@ for iTrial = 1:nTrials
             fprintf(FG,['SOUR1:FUNC:ARB SEQDC',num2str(pD)]  ); % change to sequence for current pulse duration
             fprintf(FG, 'SOUR1:VOLT 5');                        % voltage at 3 V (does not work with 5 V)
             fprintf(FG, 'SOUR1:VOLT:OFFS 0');                   % offset to 0 V
-            
+        
         otherwise % not 100% duty cycle (burst mode)
             fprintf(FG, 'SOUR1:VOLT 5');                        % voltage at 5 V (does not work at 3 V)
             fprintf(FG, 'SOUR1:VOLT:OFFS 2.5');                 % offset to 2.5 V
@@ -175,7 +188,7 @@ for iTrial = 1:nTrials
             fprintf(FG, 'SOUR1:BURS:STAT ON');                  % turn burst mode on
             
     end
-    
+    end
     % TURN FUNCTION GENERATOR OUTPUTS ON AND TRIGGER
     fprintf(FG, 'OUTP1 ON ');
     fprintf(FG, 'OUTP2 ON ');

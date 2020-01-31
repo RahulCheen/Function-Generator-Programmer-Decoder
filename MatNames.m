@@ -1,6 +1,6 @@
-function [DigitalName,TrialsName,AmpName,AnalogName,RawMatName] = MatNames(path)
+function [DigitalName,TrialsName,AmpName,AnalogName,RawMatName] = MatNames
 
-[rawFileName,path1] = uigetfile([path,'*.rhs'],'Select Raw File','MultiSelect','Off');
+[rawFileName,path1] = uigetfile('*.rhs','Select Raw File','MultiSelect','Off');
 
 DigitalName         = [rawFileName(1:end-4),'_Digital.mat'  ];
 AmpName             = [rawFileName(1:end-4),'_Amplifier.mat'];
