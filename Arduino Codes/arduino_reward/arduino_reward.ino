@@ -23,8 +23,6 @@ void setup() {
 }
 
 void loop() {
-
-  servoCont.write(45);
   int rewardDelivery = digitalRead(TOGGLE);
   switch (rewardDelivery) {
 
