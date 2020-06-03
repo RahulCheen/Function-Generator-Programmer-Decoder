@@ -16,8 +16,11 @@ read_Intan_RHS2000_file(filename);
 a = whos;
 b = {a.name};
 
-save([filename(1:end-4),'_Amplifier'],  'amp*','charge*','compliance*','spike*','stim*','freq*','notes','t');
-save([filename(1:end-4),'_Digital'],    '*dig*','freq*','notes','t');
-save([filename(1:end-4),'_Analog'],     '*adc*','freq*','notes','t');
+try save([filename(1:end-4),'_Amplifier'],  'amp*','charge*','compliance*','spike*','stim*','freq*','notes');
+catch; end
+try save([filename(1:end-4),'_Digital'],    '*dig*','freq*','notes');
+catch; end
+try save([filename(1:end-4),'_Analog'],     '*adc*','freq*','notes');
+catch; end
 %save(filename(1:end-4),b{:});
 end
