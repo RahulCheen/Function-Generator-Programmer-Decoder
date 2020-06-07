@@ -76,7 +76,7 @@ try fclose(FG2); % variable exists, in open state
     fopen(FG2);
 catch
     if ~exist('FG2','var') % variable doesnt exist
-        FG2 = visa('keysight',['USB0::0x0957::0x2A07::',FG2_ID,'::0::INSTR'])
+        FG2 = visa('agilent',['USB0::0x0957::0x2A07::',FG2_ID,'::0::INSTR'])
         FG2.OutputBufferSize = 2^32;
         % This address depends on the serial number of the machine.
         fopen(FG2) % There's some output here, so you know it worked.
@@ -92,7 +92,7 @@ try fclose(FG); % variable exists, in open state
     fopen(FG);
 catch
     if ~exist('FG','var') % variable doesnt exist
-        FG = visa('keysight',['USB0::0x0957::0x2A07::',FG_ID,'::0::INSTR'])
+        FG = visa('agilent',['USB0::0x0957::0x2A07::',FG_ID,'::0::INSTR'])
         FG.OutputBufferSize = 2^32;
         % This address depends on the serial number of the machine.
         fopen(FG) % There's some output here, so you know it worked.

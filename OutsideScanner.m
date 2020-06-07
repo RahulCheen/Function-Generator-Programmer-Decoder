@@ -58,32 +58,31 @@ end
 
 fprintf(FG_Tx,'*RST');
 fprintf(FG_Tx, 'OUTP1 OFF');           % turn channel 2 off for data phase
-fprintf(FG_Tx,['SOUR1:FREQ ' num2str(Freqs(1)*1000)]); % Transducer Frequency (kHz)
-fprintf(FG_Tx,['SOUR1:VOLT ',num2str(Amplitudes(1)/1000)]);
+fprintf(FG_Tx,['SOUR1:FREQ ' num2str(frequencies(1)*1000)]); % Transducer Frequency (kHz)
+fprintf(FG_Tx,['SOUR1:VOLT ',num2str(amplitudes(1)/1000)]);
 fprintf(FG_Tx, 'SOUR1:AM:STAT 1');     % turn AM modulation on
 fprintf(FG_Tx, 'SOUR1:AM:DSSC 1');
 fprintf(FG_Tx, 'SOUR1:AM:SOUR EXT');   % turn the source of AM modulation to channel 2
 fprintf(FG_Tx, 'OUTP1 OFF');           % turn channel 2 off for data phase
 fprintf(FG_Tx, 'OUTP1 ON');
 
-FG_Mod = 1;
 
 fprintf(FG_Mod, '*RST');
 fprintf(FG_Mod, 'SOUR2:FUNC SQU');
-fprintf(FG_Mod, ['SOUR2:FREQ ',num2str(startF)]);
-fprintf(FG_Mod, ['SOUR2:FUNC:SQU:DCYC ', num2str(sweepDC)]);  % Duty Cycle (%)
+fprintf(FG_Mod, ['SOUR2:FREQ ',num2str(PRFSweep.low)]);
+fprintf(FG_Mod, ['SOUR2:FUNC:SQU:DCYC ', num2str(dCycle)]);  % Duty Cycle (%)
 fprintf(FG_Mod, ['SOUR2:VOLT 5']);
 fprintf(FG_Mod, ['SOUR2:SWE:SPAC LIN']);
-fprintf(FG_Mod, ['SOUR2:SWE:TIME ',    num2str(sweepT)]);
-fprintf(FG_Mod, ['SOUR2:FREQ:STAR ',   num2str(startF)]);
-fprintf(FG_Mod, ['SOUR2:FREQ:STOP ',   num2str(stopF)]);
+fprintf(FG_Mod, ['SOUR2:SWE:TIME ',    num2str(PRFSweep.duration)]);
+fprintf(FG_Mod, ['SOUR2:FREQ:STAR ',   num2str(PRFSweep.low)]);
+fprintf(FG_Mod, ['SOUR2:FREQ:STOP ',   num2str(PRFSweep.high)]);
 
 fprintf(FG_Mod,'DATA:VOL:CLE');
 fprintf(FG_Mod,'SOUR1:FUNC ARB'); % Change channel 1's waveform to ARB
 fprintf(FG_Mod,'SOUR1:FUNC:ARB:FILTER STEP');
         
 fprintf(FG_Mod, ['DATA:ARB:DAC DC0',sprintf(',%d',round(zeros(8,1)*(2^15-1)))]); % smallest possible arbitraty waveform, to set triggering
-pd = sweepT;
+pd = PRFSweep.duration;
 srate = 1000;
 fprintf(FG_Mod, ['DATA:ARB:DAC DCON',sprintf(',%d',round(ones(pd*srate,1)*(2^15-1)))]); % on for sweep time
 fprintf(FG_Mod, ['DATA:ARB:DAC DCOFF',sprintf(',%d',round(zeros(0.5*srate,1)*(2^15-1)))]); % force off for 0.5s
@@ -114,7 +113,7 @@ fprintf(FG_Mod, 'OUTP1 ON');
 fprintf(FG_Mod, 'OUTP2 ON');
 fprintf(FG_Mod, 'TRIG1:SOUR BUS');
 fprintf(FG_Mod, 'TRIG2:SOUR BUS');
-
+%%
 for iTrial = 1:length(Parameters)
     tic;
     
