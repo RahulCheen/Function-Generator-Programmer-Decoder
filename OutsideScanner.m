@@ -6,7 +6,7 @@ PRFSweep.low = 10;          % [Hz]
 PRFSweep.high = 150;        % [Hz]
 PRFSweep.duration = 1.5;    % [s]
 
-amplitudes = [50 100 200 400]; % [mV]
+amplitudes = [50 100 200 400 20 60]; % [mV]
 frequencies = [130 270 885]; % [kHz]
 
 inter_trial = 3.5; % [s]
@@ -119,50 +119,60 @@ for iTrial = 1:length(Parameters)
     
     disp(['Trial ',num2str(iTrial),': CF = ',num2str(Parameters(iTrial,1)),' kHz, Amp = ',num2str(Parameters(iTrial,2)),' mV']);
     
-    fprintf(FG_Tx, 'OUTP1 OFF');
-    fprintf(FG_Mod,'OUTP1 OFF');
-    fprintf(FG_Mod,'OUTP2 OFF');
-    
-    tic; 
-    
-    % information writing
-    
-    fprintf(FG_Mod, 'SOUR1:VOLT 5');            % 5V peak-to-peak
-    fprintf(FG_Mod, 'SOUR1:VOLT:OFFS 2.5');     % 2.5V offset (0-5V)
-    fprintf(FG_Mod, 'SOUR1:FUNC SQU');          % turn to sq. wave
-    fprintf(FG_Mod, 'SOUR1:FUNC:SQU:DCYC 50');  % duty cycle of sq. wave is 50%
-    fprintf(FG_Mod, 'SOUR1:FREQ 7000');         % 7000Hz oscillating frequency
-    fprintf(FG_Mod, 'OUTP1 ON');                % turn on
-    
-    fprintf(FG_Mod, 'SOUR1:BURS:STAT 0');       % turn burst on
-    
-    pause(DurBuf/1000);                     % pause for buffer duration
-    fprintf(FG_Mod,'OUTP1 ON');                 % turn on
-    
-    % write binary data
-    for Bit=DataByte
-        if Bit
-            fprintf(FG_Mod,'SOUR1:FUNC DC'); % DC of 1
-            pause(DurBit/1000);
-            fprintf(FG_Mod,'SOUR1:FUNC SQU'); % back to buzz
-        else
-            fprintf(FG_Mod, 'SOUR1:BURS:STAT 1'); % turn off
-            pause(DurBit/1000);
-            fprintf(FG_Mod, 'SOUR1:BURS:STAT 0'); % turn back on
-        end
-    end
-    DataByte = binarize(Parameters(iTrial,:),bytesize);
-    
-    fprintf(FG_Mod,'SOUR1:BURS:STAT OFF');
-    pause(DurBuf/1000);
-    t1 = toc;
+%     fprintf(FG_Tx, 'OUTP1 OFF');
+%     fprintf(FG_Mod,'OUTP1 OFF');
+%     fprintf(FG_Mod,'OUTP2 OFF');
+%     
+%     tic; 
+%     
+%     % information writing
+%     
+%     fprintf(FG_Mod, 'SOUR1:VOLT 5');            % 5V peak-to-peak
+%     fprintf(FG_Mod, 'SOUR1:VOLT:OFFS 2.5');     % 2.5V offset (0-5V)
+%     fprintf(FG_Mod, 'SOUR1:FUNC SQU');          % turn to sq. wave
+%     fprintf(FG_Mod, 'SOUR1:FUNC:SQU:DCYC 50');  % duty cycle of sq. wave is 50%
+%     fprintf(FG_Mod, 'SOUR1:FREQ 7000');         % 7000Hz oscillating frequency
+%     fprintf(FG_Mod, 'OUTP1 ON');                % turn on
+%     
+%     fprintf(FG_Mod, 'SOUR1:BURS:STAT 0');       % turn burst on
+%     
+%     pause(DurBuf/1000);                     % pause for buffer duration
+%     fprintf(FG_Mod,'OUTP1 ON');                 % turn on
+%     
+%     % write binary data
+%     DataByte = binarize(Parameters(iTrial,:),bytesize);
+%     
+%     for Bit=DataByte
+%         if Bit
+%             fprintf(FG_Mod,'SOUR1:FUNC DC'); % DC of 1
+%             pause(DurBit/1000);
+%             fprintf(FG_Mod,'SOUR1:FUNC SQU'); % back to buzz
+%         else
+%             fprintf(FG_Mod, 'SOUR1:BURS:STAT 1'); % turn off
+%             pause(DurBit/1000);
+%             fprintf(FG_Mod, 'SOUR1:BURS:STAT 0'); % turn back on
+%         end
+%     end
+%     
+%     fprintf(FG_Mod,'SOUR1:BURS:STAT OFF');
+%     pause(DurBuf/1000);
+%     t1 = toc;
     
     fprintf(FG_Tx, ['SOUR1:VOLT ',num2str(Parameters(iTrial,2)/1000)]);
     fprintf(FG_Tx, ['SOUR1:FREQ ',num2str(Parameters(iTrial,1)*1e3)]);
     
     
+    fprintf(FG_Tx,'OUTP1 ON');
     
+    pause(0.5);
     
+    fprintf(FG_Mod, '*TRG'); % Starts Ch2 and Ch1 at same time
+    
+    pause(1.5);
+    
+    t = toc;
+    
+    pause(5-t);
 end
     %% SUPPORT FUNCTION:        BINARIZE
 function outputRow = binarize(inputRow,nBits)
