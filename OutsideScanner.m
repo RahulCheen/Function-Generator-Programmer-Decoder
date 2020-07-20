@@ -7,7 +7,7 @@ PRFSweep.high = 150;        % [Hz]
 PRFSweep.duration = 1.5;    % [s]
 
 amplitudes = [50 100 200 400 20 60]; % [mV]
-frequencies = [130 270 885]; % [kHz]
+frequencies = [135 279 885]; % [kHz]
 
 inter_trial = 3.5; % [s]
 
@@ -76,11 +76,12 @@ fprintf(FG_Mod, ['SOUR2:SWE:SPAC LIN']);
 fprintf(FG_Mod, ['SOUR2:SWE:TIME ',    num2str(PRFSweep.duration)]);
 fprintf(FG_Mod, ['SOUR2:FREQ:STAR ',   num2str(PRFSweep.low)]);
 fprintf(FG_Mod, ['SOUR2:FREQ:STOP ',   num2str(PRFSweep.high)]);
+fprintf(FG_Mod,  'SOUR2:SWE:HTIM 0.5');
 
 fprintf(FG_Mod,'DATA:VOL:CLE');
 fprintf(FG_Mod,'SOUR1:FUNC ARB'); % Change channel 1's waveform to ARB
 fprintf(FG_Mod,'SOUR1:FUNC:ARB:FILTER STEP');
-        
+
 fprintf(FG_Mod, ['DATA:ARB:DAC DC0',sprintf(',%d',round(zeros(8,1)*(2^15-1)))]); % smallest possible arbitraty waveform, to set triggering
 pd = PRFSweep.duration;
 srate = 1000;
@@ -121,18 +122,26 @@ for iTrial = 1:length(Parameters)
     
 %     fprintf(FG_Tx, 'OUTP1 OFF');
 %     fprintf(FG_Mod,'OUTP1 OFF');
-%     fprintf(FG_Mod,'OUTP2 OFF');
+%     % %     fprintf(FG_Mod,'OUTP2 OFF');
+%     % %
+%     % %     tic;
+%     % %
+%     % %     % information writing
+%     % %
+%     fprintf(FG_Mod,'SOUR1:AM:STAT 0');
 %     
-%     tic; 
-%     
-%     % information writing
+%     fprintf(FG_Mod, 'SOUR1:FUNC DC');
+%     fprintf(FG_Mod, 'SOUR1:VOLT:OFFS 5');
 %     
 %     fprintf(FG_Mod, 'SOUR1:VOLT 5');            % 5V peak-to-peak
-%     fprintf(FG_Mod, 'SOUR1:VOLT:OFFS 2.5');     % 2.5V offset (0-5V)
+%     
+%     
 %     fprintf(FG_Mod, 'SOUR1:FUNC SQU');          % turn to sq. wave
 %     fprintf(FG_Mod, 'SOUR1:FUNC:SQU:DCYC 50');  % duty cycle of sq. wave is 50%
+%     fprintf(FG_Mod, 'SOUR1:VOLT:OFFS 2.5');     % 2.5V offset (0-5V)
 %     fprintf(FG_Mod, 'SOUR1:FREQ 7000');         % 7000Hz oscillating frequency
 %     fprintf(FG_Mod, 'OUTP1 ON');                % turn on
+%     
 %     
 %     fprintf(FG_Mod, 'SOUR1:BURS:STAT 0');       % turn burst on
 %     
@@ -154,9 +163,12 @@ for iTrial = 1:length(Parameters)
 %         end
 %     end
 %     
-%     fprintf(FG_Mod,'SOUR1:BURS:STAT OFF');
+%     fprintf(FG_Mod, ['SOUR1:FUNC:ARB PRFSweep']);
+%     
+%     fprintf(FG_Mod,'SOUR1:AM:STAT 1');
+%     
 %     pause(DurBuf/1000);
-%     t1 = toc;
+    %     t1 = toc;
     
     fprintf(FG_Tx, ['SOUR1:VOLT ',num2str(Parameters(iTrial,2)/1000)]);
     fprintf(FG_Tx, ['SOUR1:FREQ ',num2str(Parameters(iTrial,1)*1e3)]);
@@ -174,7 +186,7 @@ for iTrial = 1:length(Parameters)
     
     pause(5-t);
 end
-    %% SUPPORT FUNCTION:        BINARIZE
+%% SUPPORT FUNCTION:        BINARIZE
 function outputRow = binarize(inputRow,nBits)
 % BINARIZE converts base-10 to binary
 outputRow = [];
