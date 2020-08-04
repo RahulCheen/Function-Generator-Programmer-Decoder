@@ -124,8 +124,9 @@ for iTrial = 1:length(Parameters)
     
     DataByte = binarize(Parameters(iTrial,:),bytesize); % current trial's parameter information
     
+    buzzBitWrite(FG_Mod,DataByte,BitInfoSpeed);
     
-    noOscillationARBgenerate(FG_Mod,DataByte,BitInfoSpeed,isFirst);
+    %noOscillationARBgenerate(FG_Mod,DataByte,BitInfoSpeed,isFirst);
     isFirst = 0;
     
     %     fprintf(FG_Tx, 'OUTP1 OFF');
