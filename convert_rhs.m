@@ -15,11 +15,13 @@ for ii=1:length(file)
     
     a = whos;
     b = {a.name};
-    amplifier_data = amplifier_data';
-    charge_recovery_data = charge_recovery_data';
-    amp_settle_data = amp_settle_data';
-    compliance_limit_data = compliance_limit_data';
-    stim_data = stim_data';
+    if exist('amplifier_data','var')
+        amplifier_data = amplifier_data';
+        charge_recovery_data = charge_recovery_data';
+        amp_settle_data = amp_settle_data';
+        compliance_limit_data = compliance_limit_data';
+        stim_data = stim_data';
+    end
     
     try save([filename(1:end-4),'_Amplifier'],  'amp*','charge*','compliance*','spike*','stim*','freq*','notes');
     catch; end

@@ -33,7 +33,7 @@ DurBuf = 1;     % square wave buffer duration       [ms]
 DurBeforeStim = 500; % pause between data phase and trial phase [ms]
 
 % Bit information speed:
-BitInfoSpeed = 30;  % [Hz]
+BitInfoSpeed = 60;  % [Hz]
 %% GENERATING PARAMETER LIST & BINARY DATA
 Parameters           = allcomb(TF,Amplitudes,DutyCycles,PRFs,PulseDurations); % all possible trial combinations
 [Parameters,NCycles] = RemoveParameterErrors(Parameters); % remove bad parameter combinations
@@ -121,7 +121,7 @@ for iTrial = 1:nTrials
     tic;
     DataByte = DataVector(iTrial,:); % current trial's parameter information
     fprintf(FG,'SOUR1:BURS:STAT OFF');
-    noOscillationARBgenerate(FG,DataByte);
+    noOscillationARBgenerate(FG,DataByte,BitInfoSpeed);
     
     pause(DurBuf/1000); % Ch2 offset is now set to zero for trial phase
     t1 = toc;
