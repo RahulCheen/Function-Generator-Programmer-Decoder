@@ -6,7 +6,7 @@ PRFSweep.low = 10;          % [Hz]
 PRFSweep.high = 150;        % [Hz]
 PRFSweep.duration = 1.5;    % [s]
 
-amplitudes = [30 60 120 200]; % [mV]
+amplitudes = [30 60 120 ]; % [mV]
 frequencies = [135 279 885]; % [kHz]
 PulsedContinuous = [0,1];
 
@@ -25,7 +25,7 @@ BitInfoSpeed = 30; % [Hz]
 Parameters = allcomb(frequencies,amplitudes,PulsedContinuous);
 Parameters = repmat(Parameters,nRepetitions,1);
 
-bytesize = nextpow2(max(Parameters,[],'all'));
+bytesize = nextpow2(max(max(Parameters)));
 
 Parameters = Parameters(randperm(length(Parameters)),:);
 
@@ -124,7 +124,7 @@ for iTrial = 1:length(Parameters)
     
     DataByte = binarize(Parameters(iTrial,:),bytesize); % current trial's parameter information
     
-    buzzBitWrite(FG_Mod,DataByte,BitInfoSpeed);
+    buzzBitWrite(FG_Tx,2,DataByte,BitInfoSpeed);
     
     %noOscillationARBgenerate(FG_Mod,DataByte,BitInfoSpeed,isFirst);
     isFirst = 0;
@@ -172,12 +172,13 @@ for iTrial = 1:length(Parameters)
     %         end
     %     end
     %
+    fprintf(FG_Mod,'SOUR1:FUNC ARB');
+    
     fprintf(FG_Mod, ['SOUR1:FUNC:ARB PRFSweep']);
     fprintf(FG_Mod,['SOUR1:FUNC:ARB:SRATE ',num2str(srate)]);
     fprintf(FG_Mod, 'SOUR1:AM:STAT 1');     % turn AM modulation on
     fprintf(FG_Mod, 'SOUR1:AM:DSSC OFF'                 );  % turn DSSC off
     fprintf(FG_Mod, 'SOUR1:AM:SOUR CH2');   % turn the source of AM modulation to channel 2
-    fprintf(FG_Mod, 'OUTP1 ON');
     
     
     fprintf(FG_Mod,'SOUR1:AM:STAT 1');
@@ -189,6 +190,7 @@ for iTrial = 1:length(Parameters)
     fprintf(FG_Tx, ['SOUR1:FREQ ',num2str(Parameters(iTrial,1)*1e3)]);
     fprintf(FG_Mod, 'TRIG1:SOUR BUS');
     fprintf(FG_Mod, 'TRIG2:SOUR BUS');
+    
     
     switch Parameters(iTrial,3)
         case 0
@@ -202,12 +204,13 @@ for iTrial = 1:length(Parameters)
     end
     
     fprintf(FG_Tx,'OUTP1 ON');
+    fprintf(FG_Mod, 'OUTP1 ON');
     
-    %pause(0);
+    pause(0.5);
     
     fprintf(FG_Mod, '*TRG'); % Starts Ch2 and Ch1 at same time
     
-    pause(0.5);
+    pause(2.0);
     fprintf(FG_Mod, 'OUTP1 OFF');
     fprintf(FG_Tx,'OUTP1 OFF');
     
