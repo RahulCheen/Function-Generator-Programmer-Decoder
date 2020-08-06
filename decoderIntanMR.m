@@ -1,4 +1,4 @@
-function decoderIntan(nParams)
+function decoderIntanMR(nParams)
 % DECODERINTAN reads digital data from the function generator (via Intan), and separates out binary
 % parameter information and stimulation envelopes.  Output is a file called 'ExtractedData.mat' that
 % contains a structure called 'trials', which contains information for each trial found in the digital
@@ -27,7 +27,7 @@ function decoderIntan(nParams)
 
 %% Initializations // File Loading
 if ~exist('nParams','var')
-    nParams = 5; % default to 5 parameters
+    nParams = 3; % default to 3 parameters
 end
 
 addpath(cd);
@@ -43,8 +43,9 @@ catch
     end
 end
 try data(1,:) = board_dig_in_data(1,:);   % load from .rhs file
+    data(2,:) = board_dig_in_data(2,:);
 catch
-    try data(1,:) = digital_data';        % load from .dat file
+    try data = digital_data';        % load from .dat file
     catch
         try data(1,:) = v';
         catch
@@ -121,9 +122,9 @@ while ii<length(data) % loop through digitalData
             trialStart   = endBuzz  (1)+trial_remove;
             trialEnd     = startBuzz(2)-trial_remove;
             
-            try trialstream = data(trialStart:trialEnd); % trial stream, remove 100 points from either end
+            try trialstream = data(trialStart:trialEnd,2); % trial stream, remove 100 points from either end
             catch
-                trialstream = data(trialStart:end);
+                trialstream = data(trialStart:end,2);
             end
             
             trials(iTrial).trialStart       = trialStart;  % start of trial phase
