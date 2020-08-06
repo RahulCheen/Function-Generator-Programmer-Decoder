@@ -10,7 +10,7 @@ catch
     error('did not properly establish connection to function generator.');
 end
 
-buzzDur = 5; % [ms]
+buzzDur = 15; % [ms]
 bitDur = 1000/BitInfoSpeed; % [ms]
 
 fprintf(FG,['TRIG',CH_NUM,':SOUR BUS']);
