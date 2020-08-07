@@ -114,7 +114,7 @@ while ii<length(data) % loop through digitalData
             trials(iTrial).bitData(iBit).bitStart   = endBuzz  (1);
             trials(iTrial).bitData(iBit).bitEnd     = startBuzz(2);
             trials(iTrial).bitData(iBit).bitEnv     = data(endBuzz(1):startBuzz(2));
-        
+            a = 1;
         case 0 % treat data as a trial
             %% TRIAL DATA
             %% Trial Event markers
@@ -130,6 +130,7 @@ while ii<length(data) % loop through digitalData
             trials(iTrial).trialStart       = trialStart;  % start of trial phase
             trials(iTrial).trialEnd         = trialEnd  ;  % end of trial phase
             trials(iTrial).trialEnv     	= trialstream;   % entire trial phase
+            a = 1;
             
             %% Stimulation Events markers
             stimStart   = find(trialstream,1,'first'); % referenced to start of trial
@@ -174,6 +175,7 @@ while ii<length(data) % loop through digitalData
             fullTrials{iTrial,1} = data(trials(iTrial).bitData(1).bitStart:trials(iTrial).trialEnd);
             iBit = 0; % reset bit counter
             iTrial = iTrial + 1; % increment trial counter
+            
     end
     
     %% NEXT TRIAL BUZZ SHIFT
@@ -204,6 +206,7 @@ assignin('base','trials',               eval('trials'));
 assignin('base','fs',                   eval('fs'));
 assignin('base','ParameterOrderDecoded',eval('ParameterOrderDecoded'));
 assignin('base','fullTrials',           eval('fullTrials'));
+assignin('base','data',                 eval('data'));
 
 end
 
@@ -272,19 +275,20 @@ end
 % ~~~~~~~~~~~~~~~~~~~~~~~ debinarize ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function ParaOut = debinarize(dataBlock,nParams)
 % DEBINARIZE converts from binary to base-10.  Requires a 2^n byte size (8, 16, 32, etc).
+bytesize = 10;
 
 [numberOfTrials,N] = size(dataBlock); % get size of dataBlock
 
-bytesize = floor(N/nParams);   % byte-size the divisor of number of columns and number of params
+%bytesize = floor(N/nParams);   % byte-size the divisor of number of columns and number of params
 
 ParaOut = zeros(numberOfTrials,nParams); % initialize
 for i = 1:numberOfTrials % Trial
-    for j = 1:nParams % Parameter
+    for j = 1:2 % Parameter
         for b = 1:bytesize % Bit (Goes from MSB to LSB)
             ParaOut(i,j) = 2*ParaOut(i,j); % Bitshift
             ParaOut(i,j) = ParaOut(i,j)+dataBlock(i,bytesize*j-bytesize+b); % Add next bit
         end
     end
 end
-
+ParaOut(i,3) = dataBlock(end);
 end

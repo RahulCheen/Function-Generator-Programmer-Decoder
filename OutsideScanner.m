@@ -1,4 +1,7 @@
-clearvars -except Parameters FG_Mod FG_Tx s;
+clear; 
+try, instrreset;
+catch
+end
 
 dCycle = 20;                % [%]
 
@@ -6,22 +9,23 @@ PRFSweep.low = 10;          % [Hz]
 PRFSweep.high = 150;        % [Hz]
 PRFSweep.duration = 1.5;    % [s]
 
-amplitudes = [30 60 120 ]; % [mV]
+amplitudes = [30 60 100 120 200 250]; % [mV]
 frequencies = [135 279 885]; % [kHz]
 PulsedContinuous = [0,1];
 
-inter_trial = 3.5; % [s]
+inter_trial = 5.0; % time between starts of successive trials [s]
 
-nRepetitions = 20;
+nRepetitions = 5;
 
-FG_Mod_ID = 'MY52600670';
-FG_Tx_ID  = 'MY52600694';
+FG_Mod_ID = 'MY52600694';
+FG_Tx_ID  = 'MY52600670';
 
-DurBit = 5; % [ms]
 DurBuf = 1; % [ms]
 
 DurBeforeStim = 500; % [ms]
 BitInfoSpeed = 30; % [Hz]
+DurBit = 1000/BitInfoSpeed;
+
 Parameters = allcomb(frequencies,amplitudes,PulsedContinuous);
 Parameters = repmat(Parameters,nRepetitions,1);
 
@@ -44,14 +48,14 @@ end
 
 if ~exist('FG_Tx','var')
     FG_Tx = visa('keysight',['USB0::0x0957::0x2A07::',FG_Tx_ID,'::0::INSTR']);
-    FG_Tx.OutputBufferSize = 2^32;
+    %FG_Tx.OutputBufferSize = 2^32;
     fopen(FG_Tx);
 elseif strcmp(FG_Tx.Status,'closed')
-    FG_Tx.OutputBufferSize = 2^32;
+    %FG_Tx.OutputBufferSize = 2^32;
     fopen(FG_Tx);
 else % already opened
     fclose(FG_Tx);
-    FG_Tx.OutputBufferSize = 2^32;
+    %FG_Tx.OutputBufferSize = 2^32;
     fopen(FG_Tx);
 end
 
@@ -116,62 +120,62 @@ fprintf(FG_Mod, 'OUTP2 ON');
 fprintf(FG_Mod, 'TRIG1:SOUR BUS');
 fprintf(FG_Mod, 'TRIG2:SOUR BUS');
 %%
-isFirst = 1;
+% isFirst = 1;
+estimatedTime = inter_trial*length(Parameters)/60; % [min]
+disp(['Estimated Duration of Session: ',num2str(floor(estimatedTime)),' min, ',num2str((estimatedTime-floor(estimatedTime))*60),' seconds']);
+
+pause(2.0);
+t = zeros(length(Parameters),1);
+
 for iTrial = 1:length(Parameters)
     tic;
-    fprintf(FG_Tx,'OUTP1 OFF');
     disp(['Trial ',num2str(iTrial),': CF = ',num2str(Parameters(iTrial,1)),' kHz, Amp = ',num2str(Parameters(iTrial,2)),' mV', 'Continuous?: ',num2str(Parameters(iTrial,3))]);
     
-    DataByte = binarize(Parameters(iTrial,:),bytesize); % current trial's parameter information
     
-    buzzBitWrite(FG_Tx,2,DataByte,BitInfoSpeed);
+    fprintf(FG_Tx,'OUTP1 OFF');
+    fprintf(FG_Tx,'OUTP2 OFF');
+    
+    
+    DataByte = binarize(Parameters(iTrial,:),bytesize); % current trial's parameter information
+    DataByte = [DataByte(1:bytesize*2),DataByte(end)]; % only get the last digit of the 3rd parameter (already binary)
+    %buzzBitWrite(FG_Tx,2,DataByte,BitInfoSpeed);
+    
+    % re-initialize channel 1 to buffer bursting
+    fprintf(FG_Tx, 'SOUR2:VOLT 5');            % 5V peak-to-peak
+    fprintf(FG_Tx, 'SOUR2:VOLT:OFFS 2.5');     % 2.5V offset (0-5V)
+    fprintf(FG_Tx, 'SOUR2:FUNC SQU');          % turn to sq. wave
+    fprintf(FG_Tx, 'SOUR2:FUNC:SQU:DCYC 50');  % duty cycle of sq. wave is 50%
+    fprintf(FG_Tx, 'SOUR2:FREQ 7000');         % 7000Hz oscillating frequency
+    %fprintf(FG_Tx, 'OUTP2 ON');                % turn on
+    
+    fprintf(FG_Tx, 'TRIG2:SOUR BUS');
+    fprintf(FG_Tx, 'SOUR2:BURS:STAT 0');       % turn burst on
+    
+    
+    fprintf(FG_Tx,'OUTP2 ON');                 % turn on
+    pause(DurBit/1000);                     % pause for buffer duration
+    
+    % write binary data
+    %DataByte = DataVector(iTrial,:); % current trial's parameter information
+    for Bit=DataByte
+        if Bit
+            fprintf(FG_Tx,'SOUR2:FUNC DC'); % DC of 1
+            pause(DurBit/1000);
+            fprintf(FG_Tx,'SOUR2:FUNC SQU'); % back to buzz
+        else
+            fprintf(FG_Tx, 'SOUR2:BURS:STAT 1'); % turn off
+            pause(DurBit/1000);
+            fprintf(FG_Tx, 'SOUR2:BURS:STAT 0'); % turn back on
+        end
+    end
+    
+    pause(DurBuf/1000); % Ch2 offset is now set to zero for trial phase
+     
+    fprintf(FG_Tx, 'OUTP2 OFF'); % Turn this off to prevent false 1s.
     
     %noOscillationARBgenerate(FG_Mod,DataByte,BitInfoSpeed,isFirst);
-    isFirst = 0;
+    % isFirst = 0;
     
-    %     fprintf(FG_Tx, 'OUTP1 OFF');
-    %     fprintf(FG_Mod,'OUTP1 OFF');
-    %     % %     fprintf(FG_Mod,'OUTP2 OFF');
-    %     % %
-    %     % %     tic;
-    %     % %
-    %     % %     % information writing
-    %     % %
-    %     fprintf(FG_Mod,'SOUR1:AM:STAT 0');
-    %
-    %     fprintf(FG_Mod, 'SOUR1:FUNC DC');
-    %     fprintf(FG_Mod, 'SOUR1:VOLT:OFFS 5');
-    %
-    %     fprintf(FG_Mod, 'SOUR1:VOLT 5');            % 5V peak-to-peak
-    %
-    %
-    %     fprintf(FG_Mod, 'SOUR1:FUNC SQU');          % turn to sq. wave
-    %     fprintf(FG_Mod, 'SOUR1:FUNC:SQU:DCYC 50');  % duty cycle of sq. wave is 50%
-    %     fprintf(FG_Mod, 'SOUR1:VOLT:OFFS 2.5');     % 2.5V offset (0-5V)
-    %     fprintf(FG_Mod, 'SOUR1:FREQ 7000');         % 7000Hz oscillating frequency
-    %     fprintf(FG_Mod, 'OUTP1 ON');                % turn on
-    %
-    %
-    %     fprintf(FG_Mod, 'SOUR1:BURS:STAT 0');       % turn burst on
-    %
-    %     pause(DurBuf/1000);                     % pause for buffer duration
-    %     fprintf(FG_Mod,'OUTP1 ON');                 % turn on
-    %
-    %     % write binary data
-    %     DataByte = binarize(Parameters(iTrial,:),bytesize);
-    %
-    %     for Bit=DataByte
-    %         if Bit
-    %             fprintf(FG_Mod,'SOUR1:FUNC DC'); % DC of 1
-    %             pause(DurBit/1000);
-    %             fprintf(FG_Mod,'SOUR1:FUNC SQU'); % back to buzz
-    %         else
-    %             fprintf(FG_Mod, 'SOUR1:BURS:STAT 1'); % turn off
-    %             pause(DurBit/1000);
-    %             fprintf(FG_Mod, 'SOUR1:BURS:STAT 0'); % turn back on
-    %         end
-    %     end
-    %
     fprintf(FG_Mod,'SOUR1:FUNC ARB');
     
     fprintf(FG_Mod, ['SOUR1:FUNC:ARB PRFSweep']);
@@ -206,7 +210,7 @@ for iTrial = 1:length(Parameters)
     fprintf(FG_Tx,'OUTP1 ON');
     fprintf(FG_Mod, 'OUTP1 ON');
     
-    pause(0.5);
+    pause(DurBeforeStim/1000);
     
     fprintf(FG_Mod, '*TRG'); % Starts Ch2 and Ch1 at same time
     
@@ -216,7 +220,7 @@ for iTrial = 1:length(Parameters)
     
     t(iTrial) = toc;
     
-    pause(5-t(iTrial));
+    pause(inter_trial-t(iTrial));
 end
 %% SUPPORT FUNCTION:        BINARIZE
 function outputRow = binarize(inputRow,nBits)

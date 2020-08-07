@@ -1,4 +1,4 @@
-clear;
+clearvars -except FG*;
 
 [file, path, filterindex] = ...
     uigetfile('*.rhs', 'Select an RHS2000 Data File', 'MultiSelect', 'on');
