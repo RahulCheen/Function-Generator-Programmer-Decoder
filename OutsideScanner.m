@@ -141,7 +141,7 @@ t = zeros(length(Parameters),1); %
 
 for iTrial = 1:length(Parameters)
     tic;
-    disp(['Trial ',num2str(iTrial),': CF = ',num2str(Parameters(iTrial,1)),' kHz, Amp = ',num2str(Parameters(iTrial,2)),' mV', 'Continuous?: ',num2str(Parameters(iTrial,3))]);
+    disp(['Trial ',num2str(iTrial),': CF = ',num2str(Parameters(iTrial,1)),' kHz, Amp = ',num2str(Parameters(iTrial,2)),' mV', ', Continuous?: ',num2str(Parameters(iTrial,3))]);
     
     
     fprintf(FG_Tx,'OUTP1 OFF'); % turn transducer off
@@ -218,7 +218,7 @@ for iTrial = 1:length(Parameters)
     pause(DurBeforeStim/1000);
     fprintf(FG_Mod, '*TRG'); % Starts Ch2 and Ch1 at same time
     
-    pause(PRFsweep.duration + 0.5); % pause for longer than the duration of the stimulation
+    pause(PRFSweep.duration + 0.5); % pause for longer than the duration of the stimulation
     fprintf(FG_Mod, 'OUTP1 OFF'); % turn transducer off
     fprintf(FG_Tx,  'OUTP1 OFF'); % turn modulation off
     
