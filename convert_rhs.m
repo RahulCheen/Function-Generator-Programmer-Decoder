@@ -25,7 +25,7 @@ for ii=1:length(file)
     
     if exist('board_dig_in_data','var')
         board_dig_in_data = board_dig_in_data';
-    end`
+    end
     try save([filename(1:end-4),'_Amplifier'],  'amp*','charge*','compliance*','spike*','stim*','freq*','notes');
     catch; end
     try save([filename(1:end-4),'_Digital'],    '*dig*','freq*','notes');
