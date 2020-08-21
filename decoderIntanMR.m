@@ -42,8 +42,8 @@ catch
         error('Must run conversion scripts: convert_rhs.m or convert_dat.m');
     end
 end
-try data(1,:) = board_dig_in_data(1,:);   % load from .rhs file
-    data(2,:) = board_dig_in_data(2,:);
+try data(:,1) = board_dig_in_data(:,1);   % load from .rhs file
+    data(:,2) = board_dig_in_data(:,2);
 catch
     try data = digital_data';        % load from .dat file
     catch
@@ -55,9 +55,9 @@ catch
     
 end % try to load variables of different names
 
-if ~iscolumn(data)
-    data = data';
-end
+% if ~iscolumn(data)
+%     data = data';
+% end
 fs = frequency_parameters.board_dig_in_sample_rate; % get sampling frequency from data
 
 ii = 2; % start at 2nd time point
@@ -275,7 +275,7 @@ end
 % ~~~~~~~~~~~~~~~~~~~~~~~ debinarize ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function ParaOut = debinarize(dataBlock,nParams)
 % DEBINARIZE converts from binary to base-10.  Requires a 2^n byte size (8, 16, 32, etc).
-bytesize = 10;
+bytesize = floor((length(dataBlock)-1)/2);
 
 [numberOfTrials,N] = size(dataBlock); % get size of dataBlock
 
