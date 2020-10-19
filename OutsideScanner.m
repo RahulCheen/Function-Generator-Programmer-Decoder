@@ -226,17 +226,3 @@ for iTrial = 1:length(Parameters)
     
     pause(inter_trial-t(iTrial)); % pause so that time between the starts of the trials are 5 seconds apart
 end
-%% SUPPORT FUNCTION: BINARIZE
-function outputRow = binarize(inputRow,nBits)
-% BINARIZE converts base-10 to binary
-outputRow = [];
-for ii=1:length(inputRow)
-    outputBit = zeros(1,nBits);
-    workingNumber = inputRow(ii); % Algorithm for converting int to binary
-    for bit = nBits:-1:1
-        outputBit(bit) = mod(workingNumber,2);
-        workingNumber = (workingNumber-outputBit(bit))/2;
-    end
-    outputRow = [outputRow,outputBit];
-end
-end

@@ -12,8 +12,14 @@ function A = allcomb(varargin)
 %       % -> [ 1  -3   0
 %       %      1  -3   1
 %       %      1   8   0
-%       %        ...
+%       %      1   8   1
+%       %      3  -3   0
+%       %      3  -3   1
+%       %      3   8   0
+%       %      3   8   1
+%       %      5  -3   0
 %       %      5  -3   1
+%       %      5   8   0
 %       %      5   8   1 ] ; % a 12-by-3 array
 %
 %       allcomb('abc','XY') % character arrays

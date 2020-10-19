@@ -122,10 +122,15 @@ while ii<length(data) % loop through digitalData
             trialStart   = endBuzz  (1)+trial_remove;
             trialEnd     = startBuzz(2)-trial_remove;
             
-            try trialstream = data(trialStart:trialEnd,2); % trial stream, remove 100 points from either end
+            try trialstream = data(trialStart:trialEnd,1);
             catch
-                trialstream = data(trialStart:end,2);
+                trialstream = data(trialStart:end,1);
             end
+            
+%             try trialstream = data(trialStart:trialEnd,2); % trial stream, remove 100 points from either end
+%             catch
+%                 trialstream = data(trialStart:end,2);
+%             end
             
             trials(iTrial).trialStart       = trialStart;  % start of trial phase
             trials(iTrial).trialEnd         = trialEnd  ;  % end of trial phase
@@ -155,7 +160,7 @@ while ii<length(data) % loop through digitalData
             %% Decoded Stimulation Parameters
             try trialByte        = [trials(iTrial).bitData(:).bitValue]; % try to get the information
                 trial_parameters = debinarize(trialByte,nParams);
-                trials(iTrial).paramters_values  = trial_parameters;
+                trials(iTrial).parameters_values  = trial_parameters;
                 
                 trials(iTrial).carrierFreq       = trial_parameters(1);
                 trials(iTrial).amplitude         = trial_parameters(2);
