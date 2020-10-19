@@ -3,33 +3,37 @@
 %   Arduino Connected
 %   Flag for 50% duty cycle sine-wave modulation (rather than square wave modulation)
 
-clearvars -except Parameters FG* s;
+clear; 
 
+try, instrreset;
+catch
+end
 %% PARAMETERS
 % Inter-trial duration saturation occurs at 3 times the greatest trial duration.
-inter_trial     = 5000;     % time between stimulations [ms]
-bytesize        = 16;       % number of bits to write for each parameter(keep at 16 for parameter values of <= 65000)
+inter_trial     = 10000;     % time between stimulations [ms]
+bytesize        = 10;       % number of bits to write for each parameter(keep at 16 for parameter values of <= 65000)
 nRepetitions    = 5;        % number of times to repeat each permutation (randomization occurs AFTER repetition)
 
 sineWaveModFlag = 1;
 % Import a parameter set list, OR populate a parameter set list
-TF              =  500                           ;  % TRANSDUCER FREQUENCY (must be a single value) [kHz]
-Amplitudes      = [ 200  400           ];            % voltages to achieve 1, and 10 W/cm^2     [mV]
+TF              =  260                           ;  % TRANSDUCER FREQUENCY (must be a single value) [kHz]
+Amplitudes      = 30:30:150;%[ 200         ];            % voltages to achieve 1, and 10 W/cm^2     [mV]
 %TF              = 1000                           ;  % TRANSDUCER FREQUENCY (must be a single value) [kHz]
 %Amplitudes      = [16 50             ];            % voltages to achieve 1, and 10 W/cm^2     [mV]
-DutyCycles      = [10 25      ];                	% duty cycles                                   [%]
-PRFs            = [5];                          % pulse repetition frequencies                  [Hz]
-PulseDurations  = [  2000   1000            ];       % pulse durations                               [ms]
+DutyCycles      = [50       ];                	% duty cycles                                   [%]
+PRFs            = [500];                          % pulse repetition frequencies                  [Hz]
+PulseDurations  = [300    ];       % pulse durations                               [ms]
 
 trial_order     = 'random'; % = 'in order';
-%FG_ID           = 'MY52600694'; % serial number of new fxn generator
-FG_ID           = 'MY52600670'; % serial number of old fxn generator
+%trial_order      = 'in order';
+ FG_ID           = 'MY52600670'; % serial number of new fxn generator
+%FG_ID           = 'MY52600694'; % serial number of old fxn generator
 
 ARD_ID          = 'COM7';       % arduino port connection
 
 % For handling data cycles
-DurBit = 5;     % bit duration approx 2 ms longer   [ms] 
-DurBuf = 1;     % square wave buffer duration       [ms]
+DurBit = 66;     % bit duration approx 2 ms longer   [ms] 
+DurBuf = 33;     % square wave buffer duration       [ms]
 
 DurBeforeStim = 500; % pause between data phase and trial phase [ms]
 
@@ -39,7 +43,7 @@ Parameters           = allcomb(TF,Amplitudes,DutyCycles,PRFs,PulseDurations); % 
 
 Parameters = repmat(Parameters,nRepetitions,1);           % repeat all trials
 
-bytesize = max([nextpow2(max(max(Parameters))),bytesize]); % take maximum of needed bytesize and user-input bytesize
+bytesize = min([nextpow2(max(max(Parameters))),bytesize]); % take maximum of needed bytesize and user-input bytesize
 
 nTrials      = size(Parameters,1); % number of trials
 nParams      = size(Parameters,2); % number of parameters
@@ -87,7 +91,7 @@ fprintf(FG_Tx, '*RST'); % Resets to factory default, outputs are off by default
 ARBgenerate(FG_Tx,PulseDurations,12);
 
 % INITIALIZATIONS ON CHANNEL 1      (DIGITAL CHANNEL)
-fprintf(FG_Tx, 'OUTP1:LOAD INF'); % MAY NEED TO CHANGE THIS
+fprintf(FG_Tx, 'OUTP1:LOAD 50'); % MAY NEED TO CHANGE THIS
 
 fprintf(FG_Tx, 'SOUR1:VOLT 5');        % 5V peak-to-peak
 fprintf(FG_Tx, 'SOUR1:VOLT:OFFS 2.5'); % 2.5V offset (0-5V range)
@@ -172,7 +176,7 @@ for iTrial = 1:nTrials
             
             fprintf(FG_Tx, 'SOUR1:FUNC  ARB'                    ); % change to arbitrary waveform
             fprintf(FG_Tx,['SOUR1:FUNC:ARB SEQDC',num2str(pD)]  ); % change to sequence for current pulse duration
-            fprintf(FG_Tx, 'SOUR1:VOLT 5');                        % voltage at 3 V (does not work with 5 V)
+            fprintf(FG_Tx, 'SOUR1:VOLT 1');                        % voltage at 3 V (does not work with 5 V)
             fprintf(FG_Tx, 'SOUR1:VOLT:OFFS 0');                   % offset to 0 V
         
         otherwise % not 100% duty cycle (burst mode)

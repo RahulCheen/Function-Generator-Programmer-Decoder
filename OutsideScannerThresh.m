@@ -2,23 +2,23 @@ clear;
 try, instrreset;
 catch
 end
-
+%
 dCycle = 20;                % [%]
 
 PRFSweep.low = 10;          % [Hz]
 PRFSweep.high = 150;        % [Hz]
 PRFSweep.duration = 1.5;    % [s]
 
-amplitudes = 10:10:250; % 4 amplitudes [mV]
-frequencies = [135]; % 3 frequencies, [kHz]
+amplitudes = 10:30:150; % 4 amplitudes [mV]
+frequencies = [270]; % 3 frequencies, [kHz]
 PulsedContinuous = [0];
 
-inter_trial = 5.0; % time between starts of successive trials [s]
+inter_trial = 10; % time between starts of successive trials [s]
 
-nRepetitions = 1; % number of reptitions for each stimulus
+nRepetitions = 10; % number of reptitions for each stimulus
 
-FG_Mod_ID = 'MY52600694'; % modulation function generator
-FG_Tx_ID  = 'MY52600670'; % transducer function generator
+FG_Mod_ID = 'MY52600670'; % modulation function generator
+FG_Tx_ID  = 'MY52600694'; % transducer function generator
 
 DurBuf = 1; % buffer duration (used rarely) [ms]
 
@@ -28,12 +28,14 @@ BitInfoSpeed = 30; % how fast the information writing phase writes each binary n
 DurBit = 1000/BitInfoSpeed;
 
 Parameters = allcomb(frequencies,amplitudes,PulsedContinuous); % matrix of paramerter combinations
+Parameters = Parameters(randperm(length(Parameters)),:); % randomize trials
 Parameters = repmat(Parameters,nRepetitions,1); % repeat parameter combinations
 
 bytesize = nextpow2(max(max(Parameters))); % number of bytes to write, found automatically based on the largest number needed to be written
 
+estimatedTime = inter_trial*length(Parameters)/60; % [min]
+disp(['Estimated Duration of Session: ',num2str(floor(estimatedTime)),' min, ',num2str((estimatedTime-floor(estimatedTime))*60),' seconds']);
 
-%Parameters = Parameters(randperm(length(Parameters)),:); % randomize trials
 
 % establish connection with function generators
 if ~exist('FG_Mod','var') % modulation function generator
@@ -218,7 +220,7 @@ for iTrial = 1:length(Parameters)
     pause(DurBeforeStim/1000);
     fprintf(FG_Mod, '*TRG'); % Starts Ch2 and Ch1 at same time
     
-    pause(PRFsweep.duration + 0.5); % pause for longer than the duration of the stimulation
+    pause(PRFSweep.duration + 0.5); % pause for longer than the duration of the stimulation
     fprintf(FG_Mod, 'OUTP1 OFF'); % turn transducer off
     fprintf(FG_Tx,  'OUTP1 OFF'); % turn modulation off
     
