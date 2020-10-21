@@ -5,10 +5,10 @@ catch
 end
 
 %%
-frequency               = 260;                  % [kHz]
-amplitudes              = [0.125 0.25 0.5 1];   % [MPa]
+frequency               = 258;                  % [kHz]
+amplitudes              = [0.125 0.25 0.5 1 2];   % [MPa]
 conversionVtoMPa        = 4;                    % 4MPa at 1 V
-nRepetitions            = 12;
+nRepetitions            = 10;
 
 stimuli(1).dutycycle    = 20;           % [%]
 stimuli(1).prf          = [10 150];     % [Hz]
@@ -22,7 +22,7 @@ stimuli(3).dutycycle    = 100;          % [%]
 stimuli(3).prf          = [0];          % [Hz]
 stimuli(3).duration     = 0.3;          % [s]
 
-inter_trial             = 3;           % [s]
+inter_trial             = 10;           % [s]
 durationBeforeStim      = 0.5;          % [s]
 durationBuffer          = 0.001;        % [s]
 frequencyBitSpeed       = 15;           % [Hz]
@@ -113,7 +113,7 @@ for ii=1:length(stimuli)
     %fprintf(FG_Mod,['MMEM:STORE:DATA "INT:\PRFSweep.seq"']);
     fprintf(FG_Mod,['SOUR1:FUNC:ARB:SRATE ',num2str(srate)]);
     fprintf(FG_Mod,'SOUR1:VOLT 1');
-    
+    pause(1);
 end
 %%
 fprintf(FG_Mod, 'SOUR1:AM:STAT 1');
@@ -128,10 +128,15 @@ fprintf(FG_Mod, 'SOUR2:FUNC SQU'                    );  % change to square wave
 fprintf(FG_Mod,'TRIG1:SOUR BUS');
 fprintf(FG_Mod,'TRIG2:SOUR BUS');
 
+fprintf(FG_Mod, 'SOUR1:VOLT 2');
+
+pause(1);
+%%
+
 for ii=1:length(Parameters)
     tic;
     s1 = stimuli(Parameters(ii,2));
-    fprintf(FG_Tx,['SOUR1:VOLT ',num2str(0.5*Parameters(ii,1)*1e-3)]);
+    fprintf(FG_Tx,['SOUR1:VOLT ',num2str(Parameters(ii,1)*1e-3)]);
     switch Parameters(ii,2)
         case 1
             disp(['Trial ',num2str(ii),...
@@ -209,7 +214,7 @@ for ii=1:length(Parameters)
     pause(durationBuffer); % Ch2 offset is now set to zero for trial phase
     
     fprintf(FG_Tx,'OUTP2 OFF');
-    fprintf(FG_Mod, 'SOUR1:VOLT 2');
+    fprintf(FG_Mod, 'SOUR1:VOLT 2.9');
 
     fprintf(FG_Tx, 'OUTP1 ON');
     fprintf(FG_Mod,'OUTP1 ON');
