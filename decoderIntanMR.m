@@ -42,8 +42,8 @@ catch
         error('Must run conversion scripts: convert_rhs.m or convert_dat.m');
     end
 end
-try data(:,1) = board_dig_in_data(:,1);   % load from .rhs file
-    data(:,2) = board_dig_in_data(:,2);
+try data(:,1) = board_dig_in_data(:,2);   % load from .rhs file
+    data(:,2) = board_dig_in_data(:,1);
 catch
     try data = digital_data';        % load from .dat file
     catch
@@ -69,24 +69,12 @@ ii=new_ii;
 % initialize export structure
 trials = struct(...
     'bitData',          struct(...
-                                'bitMean',      [],...
-                                'bitValue',     [],...
-                                'bitStart',     [],...
-                                'bitEnd',       [],...
-                                'bitEnv',       []...
-                                )...
-    ,'trialEnv',         []...
-    ,'stimEnv',          []...
-    ,'trialStart',       []...
-    ,'trialEnd',         []...
-    ,'stimStart',        []...
-    ,'stimEnd',          []...
-    ,'stimDur',          []...
-    ,'carrierFreq',      []...
-    ,'amplitude',        []...
-    ,'dutyCycle',        []...
-    ,'modFreq',          []...
-    ,'pulseDuration',    []...
+    'bitMean',      [],...
+    'bitValue',     [],...
+    'bitStart',     [],...
+    'bitEnd',       [],...
+    'bitEnv',       []...
+    )...
     );
 
 %% MAIN LOOP
@@ -95,9 +83,7 @@ iBit = 0; iTrial = 1;
 while ii<length(data) % loop through digitalData
     disp(['Trial #',num2str(iTrial),', Bit ',num2str(iBit)]);
     % find the next buzz
-
     [startBuzz(2),endBuzz(2),new_ii] = findBuzz(data,ii); % Call findBuzz
-    
     % inter-buzz duration
     lbetweenBuzz = startBuzz(2)-endBuzz(1);
     bit = lbetweenBuzz < fs/2; % bit information is always less than 0.5 seconds
@@ -118,19 +104,20 @@ while ii<length(data) % loop through digitalData
         case 0 % treat data as a trial
             %% TRIAL DATA
             %% Trial Event markers
+            tic;
             trial_remove = 100;
             trialStart   = endBuzz  (1)+trial_remove;
             trialEnd     = startBuzz(2)-trial_remove;
             
-            try trialstream = data(trialStart:trialEnd,1);
+            try trialstream = data(trialStart:trialEnd,2);
             catch
-                trialstream = data(trialStart:end,1);
+                trialstream = data(trialStart:end,2);
             end
             
-%             try trialstream = data(trialStart:trialEnd,2); % trial stream, remove 100 points from either end
-%             catch
-%                 trialstream = data(trialStart:end,2);
-%             end
+            %             try trialstream = data(trialStart:trialEnd,2); % trial stream, remove 100 points from either end
+            %             catch
+            %                 trialstream = data(trialStart:end,2);
+            %             end
             
             trials(iTrial).trialStart       = trialStart;  % start of trial phase
             trials(iTrial).trialEnd         = trialEnd  ;  % end of trial phase
@@ -147,7 +134,7 @@ while ii<length(data) % loop through digitalData
                 % stimulation markers
                 trials(iTrial).stimStart   	= stimStart + trialStart ; % referenced to start of session
                 trials(iTrial).stimEnd     	= stimEnd   + trialStart ; % referenced to start of session
-                trials(iTrial).stimEnv      = trialstream(stimStart:stimEnd); 
+                trials(iTrial).stimEnv      = trialstream(stimStart:stimEnd);
                 trials(iTrial).stimDur      = 1000*(trials(iTrial).stimEnd - trials(iTrial).stimStart)./fs;
                 
             catch % replace with empty values if an error occurred in finding stim onset/offset
@@ -156,31 +143,20 @@ while ii<length(data) % loop through digitalData
                 trials(iTrial).stimEnv      = []; %
             end
             
-            
             %% Decoded Stimulation Parameters
-            try trialByte        = [trials(iTrial).bitData(:).bitValue]; % try to get the information
-                trial_parameters = debinarize(trialByte,nParams);
-                trials(iTrial).parameters_values  = trial_parameters;
-                
-                trials(iTrial).carrierFreq       = trial_parameters(1);
-                trials(iTrial).amplitude         = trial_parameters(2);
-                trials(iTrial).dutyCycle         = trial_parameters(3);
-                trials(iTrial).modFreq           = trial_parameters(4);
-                trials(iTrial).pulseDuration     = trial_parameters(5);
-                
-            catch % unable to extract parameters, set to empty, find corresponding trial in ParameterOrder.mat
-                trials(iTrial).carrierFreq       = [];
-                trials(iTrial).amplitude         = [];
-                trials(iTrial).dutyCycle         = [];
-                trials(iTrial).modFreq           = [];
-                trials(iTrial).pulseDuration     = [];
+            %try
+            trialByte        = [trials(iTrial).bitData(:).bitValue]; % try to get the information
+            trial_parameters = debinarize(trialByte,2);
+            trials(iTrial).parameters_values  = trial_parameters;
             
-            end
+            %catch % unable to extract parameters, set to empty, find corresponding trial in ParameterOrder.mat
             
-            fullTrials{iTrial,1} = data(trials(iTrial).bitData(1).bitStart:trials(iTrial).trialEnd);
+            
+            %end
+            
+            %fullTrials{iTrial,1} = data(trials(iTrial).bitData(1).bitStart:trials(iTrial).trialEnd);
             iBit = 0; % reset bit counter
             iTrial = iTrial + 1; % increment trial counter
-            
     end
     
     %% NEXT TRIAL BUZZ SHIFT
@@ -196,21 +172,21 @@ end
 % save to file, in same folder as data
 save(trialsName,'trials','rawDataName','fs');
 
-ParameterOrderDecoded = [...
-    [trials(:).carrierFreq]',...
-    [trials(:).amplitude]',...
-    [trials(:).dutyCycle]',...
-    [trials(:).modFreq]',...
-    [trials(:).pulseDuration]'];
-
-disp(['       Number of Trials: ',num2str(length(ParameterOrderDecoded))]);
-disp(['Number of Unique Trials: ',num2str(length(unique(ParameterOrderDecoded,'rows')))]);
+% ParameterOrderDecoded = [...
+%     [trials(:).carrierFreq]',...
+%     [trials(:).amplitude]',...
+%     [trials(:).dutyCycle]',...
+%     [trials(:).modFreq]',...
+%     [trials(:).pulseDuration]'];
+% 
+disp(['       Number of Trials: ',num2str(length(trials))]);
+disp(['Number of Unique Trials: ',num2str(length(unique(reshape([trials(:).parameters_values],2,[])','rows')))]);
 
 % MOVE SELECT VARIABLES TO WORKSPACE
 assignin('base','trials',               eval('trials'));
 assignin('base','fs',                   eval('fs'));
-assignin('base','ParameterOrderDecoded',eval('ParameterOrderDecoded'));
-assignin('base','fullTrials',           eval('fullTrials'));
+%assignin('base','ParameterOrderDecoded',eval('ParameterOrderDecoded'));
+%assignin('base','fullTrials',           eval('fullTrials'));
 assignin('base','data',                 eval('data'));
 
 end
@@ -224,7 +200,7 @@ function [buzzStart,buzzEnd,new_ii] = findBuzz(d1,startindex)
 % new starting index for the next iteration.  If the loop goes to the end of the digital channel without
 % finding a buzz, a "phantom" buzz is returned, where the start and end of the buzz are both at the last
 % point in the digital data.
-% 
+%
 % The algorithm to find the buzz uses a 10 data point window, and slides it along the digital data.  As
 % it slides along the data until it finds where there are equal number of 1s and 0s, as well as more than
 % 1 positive and negative changes, meaning there are fast oscillations occuring.  Once it finds the first
@@ -253,7 +229,7 @@ while ii < length(d1)-10
                 buzzStart = win(1); % start of buzz at first detection of oscillation
             end
             inbuzzflag = 1; % we know we're in a buzz, change behavior
-
+            
         else% no need to do anything here
         end
         
@@ -282,18 +258,22 @@ function ParaOut = debinarize(dataBlock,nParams)
 % DEBINARIZE converts from binary to base-10.  Requires a 2^n byte size (8, 16, 32, etc).
 bytesize = floor((length(dataBlock)-1)/2);
 
-[numberOfTrials,N] = size(dataBlock); % get size of dataBlock
+N = size(dataBlock,2);
+%[,N] = size(dataBlock); % get size of dataBlock
 
 %bytesize = floor(N/nParams);   % byte-size the divisor of number of columns and number of params
+bytesize = [length(dataBlock)-2,2];
 
-ParaOut = zeros(numberOfTrials,nParams); % initialize
-for i = 1:numberOfTrials % Trial
-    for j = 1:2 % Parameter
-        for b = 1:bytesize % Bit (Goes from MSB to LSB)
-            ParaOut(i,j) = 2*ParaOut(i,j); % Bitshift
-            ParaOut(i,j) = ParaOut(i,j)+dataBlock(i,bytesize*j-bytesize+b); % Add next bit
-        end
-    end
-end
-ParaOut(i,3) = dataBlock(end);
+ParaOut(1) = bin2dec(num2str(dataBlock(1:bytesize(1))));
+ParaOut(2) = bin2dec(num2str(dataBlock(bytesize(1)+1:bytesize(1)+bytesize(2))));
+
+%nParams = 2;
+% ParaOut = zeros(1,nParams); % initialize
+% for j = 1:nParams % Parameter
+%     for b = 1:bytesize(j) % Bit (Goes from MSB to LSB)
+%         ParaOut(1,j) = 2*ParaOut(1,j); % Bitshift
+%         ParaOut(1,j) = ParaOut(1,j)+dataBlock(1,bytesize(j)*j-bytesize(j)+b); % Add next bit
+%     end
+% end
+
 end
