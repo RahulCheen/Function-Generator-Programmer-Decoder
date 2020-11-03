@@ -1,4 +1,4 @@
-function decoderIntanMR(nParams)
+function decoderIntanMR(filename)
 % DECODERINTAN reads digital data from the function generator (via Intan), and separates out binary
 % parameter information and stimulation envelopes.  Output is a file called 'ExtractedData.mat' that
 % contains a structure called 'trials', which contains information for each trial found in the digital
@@ -33,7 +33,16 @@ end
 addpath(cd);
 addpath(pwd);
 
-[dataName,trialsName,~,rawDataName] = MatNames;
+if ~exist('filename','var')
+    [dataName,trialsName,~,rawDataName] = MatNames;
+elseif isempty(filename)
+    [dataName,trialsName,~,rawDataName] = MatNames;
+else
+    dataName     = [           filename(1:end-4),'_Digital.mat'  ];
+    trialsName   = ['trials_', filename(1:end-4),'.mat'];
+    rawDataName  = [           filename(1:end-4),'.mat'];
+end
+
 
 try load(dataName,'*dig*','*adc*','ana*','freq*','v*'); % load in all variables with these
 catch
@@ -178,10 +187,12 @@ save(trialsName,'trials','rawDataName','fs');
 %     [trials(:).dutyCycle]',...
 %     [trials(:).modFreq]',...
 %     [trials(:).pulseDuration]'];
-% 
+%
+try
 disp(['       Number of Trials: ',num2str(length(trials))]);
 disp(['Number of Unique Trials: ',num2str(length(unique(reshape([trials(:).parameters_values],2,[])','rows')))]);
-
+catch disp('Unable to display trial count and unique trials count.');
+end
 % MOVE SELECT VARIABLES TO WORKSPACE
 assignin('base','trials',               eval('trials'));
 assignin('base','fs',                   eval('fs'));
